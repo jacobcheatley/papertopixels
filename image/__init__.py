@@ -1,2 +1,3 @@
-from .rectanglefinder import *
-from .linefinder import *
+from .rectangle import *
+from .lines import *
+from .color import *

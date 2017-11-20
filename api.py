@@ -19,6 +19,7 @@ def _json_save(dct: dict):
 def process_image(file: werkzeug.datastructures.FileStorage):
     print('Processing image')
     map_id = get_next_free()  # TODO: support concurrency properly
+    pre = f'image/out/{map_id}'
 
     # Get image into memory to be worked with in CV
     in_memory = BytesIO()
@@ -27,8 +28,11 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     img = cv2.imdecode(data, 1)
 
     # Process the image in stages
-    rect = image.find_rectangle(img)
-    lines = image.find_lines(rect)  # TODO: Make this actually functional
+    edges, highlight, rect = image.edges_highlight_rect(img)
+    os.makedirs(pre, exist_ok=True)
+    cv2.imwrite(f'{pre}/edges.png', edges)
+    cv2.imwrite(f'{pre}/highlight.png', highlight)
+    cv2.imwrite(f'{pre}/rect.png', rect)
     _json_save({'id': map_id, 'dim': list(rect.shape)})
 
     return map_id

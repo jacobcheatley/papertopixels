@@ -17,7 +17,7 @@ corners = np.array([[[MARGIN, MARGIN]],
 pts_dst = np.array(corners, np.float32)
 
 
-def _edges_highlight_rect(img):
+def edges_highlight_rect(img):
     # Noise reduced greyscale image
     gray = cv2.bilateralFilter(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 1, 10, 120)
     # Edge detection
@@ -44,22 +44,19 @@ def _edges_highlight_rect(img):
     return edges, img, rect
 
 
-def find_rectangle(img, display_preview=False) -> np.ndarray:
-    edges, highlight, rect = _edges_highlight_rect(img)
+def rectangle_preview(img):
+    edges, highlight, rect = edges_highlight_rect(img)
 
-    if display_preview:
-        cv2.namedWindow('edges', cv2.WINDOW_AUTOSIZE)
-        cv2.imshow('edges', edges)
-        cv2.namedWindow('rgb', cv2.WINDOW_AUTOSIZE)
-        cv2.imshow('rgb', img)
-        if rect is not None:
-            cv2.namedWindow('out', cv2.WINDOW_AUTOSIZE)
-            cv2.imshow('out', rect)
-        cv2.waitKey(0)
-
-    return rect
+    cv2.namedWindow('edges', cv2.WINDOW_AUTOSIZE)
+    cv2.imshow('edges', edges)
+    cv2.namedWindow('rgb', cv2.WINDOW_AUTOSIZE)
+    cv2.imshow('rgb', img)
+    if rect is not None:
+        cv2.namedWindow('out', cv2.WINDOW_AUTOSIZE)
+        cv2.imshow('out', rect)
+    cv2.waitKey(0)
 
 
 if __name__ == '__main__':
     img = cv2.imread('data/maze-scaled.jpg')
-    find_rectangle(img, True)
+    rectangle_preview(img)
