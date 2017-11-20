@@ -3,7 +3,8 @@ import cv2
 
 BLUE_MASK = (90, 150)
 GREEN_MASK = (30, 90)
-RED_MASK = (-30, 30)
+RED_L_MASK = (150, 179)
+RED_U_MASK = (0, 30)
 
 SAT = (50, 255)
 VAL = (50, 255)
@@ -15,14 +16,17 @@ def create_masks(template):
 
 B1, B2 = create_masks(BLUE_MASK)
 G1, G2 = create_masks(GREEN_MASK)
-R1, R2 = create_masks(RED_MASK)
+RL1, RL2 = create_masks(RED_L_MASK)
+RU1, RU2 = create_masks(RED_U_MASK)
 
 
 def threshold(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     b = cv2.inRange(hsv, B1, B2)
     g = cv2.inRange(hsv, G1, G2)
-    r = cv2.inRange(hsv, R1, R2)
+    rl = cv2.inRange(hsv, RL1, RL2)
+    ru = cv2.inRange(hsv, RU1, RU2)
+    r = rl + ru
 
     cv2.imshow('b', b)
     cv2.imshow('g', g)
