@@ -27,6 +27,11 @@ def upload_file():
         return render_template('upload.html')
 
 
+@app.route('/camera', methods=['GET'])
+def camera_preview():
+    return render_template('camera.html')
+
+
 # TODO: remove and use apache file serving later
 @app.route('/map/<map_id>', methods=['GET'])
 def get_map(map_id: int):
@@ -37,4 +42,4 @@ if __name__ == '__main__':
     app.secret_key = 'test'
     app.config['SESSION_TYPE'] = 'filesystem'
 
-    app.run()
+    app.run(host='0.0.0.0', ssl_context=('ssl/certificate.crt', 'ssl/privateKey.key'))

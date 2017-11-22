@@ -34,4 +34,5 @@ def threshold(img):
     cv2.waitKey(0)
 
 
-threshold(cv2.imread('out/1/rect.png'))
+if __name__ == '__main__':
+    threshold(cv2.imread('out/1/rect.png'))
