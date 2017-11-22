@@ -3,9 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <title>Camera Upload Preview</title>
+    <style>
+        video {
+            width: 100%;
+            max-width: 1280px;
+            margin: auto;
+            display: block;
+        }
+
+        button {
+            width: 40%;
+            font-size: 4em;
+            display: inline-block;
+        }
+
+        #buttons {
+            margin: 0 auto;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+    <script>
+'use strict';
+
+window.onload = function() {
+    // Elements
+    var videoElement = document.querySelector('video');
+    var switchElement = document.querySelector('button#switch');
+    var captureElement = document.querySelector('button#capture');
+
+    // Variables
+    var videoDevices = [];
+    var currentDevice = 0;
+
+    // Start of running
+    navigator.mediaDevices
+        .enumerateDevices()
+        .then(gotDevices)
+        .then(getStream)
+        .catch(handleError);
+
+    // Functions
+    function gotDevices(deviceInfos) {
+        for (var i = 0; i < deviceInfos.length; i++) {
+            var deviceInfo = deviceInfos[i];
+            if (deviceInfo.kind === 'videoinput') {
+                videoDevices.push(deviceInfo.deviceId);
+            }
+        }
+    }
+
+    function getStream() {
+        if (window.stream) {
+            window.stream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+        }
+
+        var constraints = {
+            video: {deviceId: {exact: videoDevices[currentDevice]}}
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
+    }
+
+    function gotStream(stream) {
+        window.stream = stream;
+        videoElement.srcObject = stream;
+        videoElement.play();
+    }
+
+    function switchSource() {
+        currentDevice = (currentDevice + 1) % videoDevices.length;
+        getStream();
+    }
+
+    function handleError(error) {
+        console.log('Error: ', error);
+    }
+
+    // Event handlers
+    switchElement.addEventListener('click', switchSource, false);
+};
+    </script>
 </head>
 <body>
     <video muted autoplay></video>
-    <script src="{{ url_for('static', filename='camera.js') }}"></script>
+    <br>
+    <div id="buttons">
+        <button id="switch">Switch Camera</button>
+        <button id="capture">Take Capture</button>
+    </div>
 </body>
 </html>
