@@ -3,20 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Camera Upload Preview</title>
+    <script src="{{ url_for('static', filename='jsfeat.js') }}"></script>
     <style>
         #c {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            background: linear-gradient(rgba(255,0,0,0.3), rgba(255,255,0,0.3));
-        }
-
-        video {
-            width: 100%;
             display: block;
+            margin: auto;
         }
 
         #container {
@@ -24,7 +15,6 @@
             max-width: 1280px;
             padding: 0;
             margin: auto;
-            position: relative;
         }
 
         button {
@@ -43,8 +33,15 @@
 'use strict';
 
 window.onload = function() {
+    // Constants
+    var LOW_THRES = 20;
+    var HIGH_THRES = 90;
+    var KERNEL = 5 << 1;
+
     // Elements
-    var videoElement = document.querySelector('video');
+    var videoElement = document.createElement('video');
+    videoElement.autoplay = true;
+    videoElement.muted = true;
     var switchElement = document.querySelector('button#switch');
     var captureElement = document.querySelector('button#capture');
     var canvas = document.querySelector('#c');
@@ -53,10 +50,11 @@ window.onload = function() {
     var videoDevices = [];
     var currentDevice = 0;
     var ctx = canvas.getContext('2d');
+    var vw = 0;
+    var vh = 0;
 
     // Set up
-    var cw = 0;
-    var ch = 0;
+    var img_u8;
 
     window.video = videoElement;
 
@@ -86,7 +84,10 @@ window.onload = function() {
         }
 
         var constraints = {
-            video: {deviceId: {exact: videoDevices[currentDevice]}}
+            video: {
+                deviceId: {exact: videoDevices[currentDevice]}
+                // TODO: Resolution finding (https://webrtchacks.com/getusermedia-resolutions-3/?)
+            }
         };
 
         navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
@@ -97,10 +98,6 @@ window.onload = function() {
         window.stream = stream;
         videoElement.srcObject = stream;
         videoElement.play();
-
-        // Resize canvas
-        cw = canvas.offsetWidth;
-        ch = canvas.offsetHeight;
     }
 
     function switchSource() {
@@ -112,15 +109,41 @@ window.onload = function() {
         console.log('Error: ', error);
     }
 
+    function adjust() {
+        vw = videoElement.videoWidth;
+        vh = videoElement.videoHeight;
+        canvas.width = vw;
+        canvas.height = vh;
+        img_u8 = new jsfeat.matrix_t(vw, vh, jsfeat.U8C1_t);
+    }
+
     function draw() {
-        ctx.clearRect(0,0,cw,ch);
+        requestAnimationFrame(draw);
 
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(cw, ch);
-        ctx.stroke();
+        if (vw === 0) adjust();
 
-        setTimeout(draw, 200);
+        ctx.clearRect(0, 0, vw, vh);
+
+        ctx.drawImage(videoElement, 0, 0, vw, vh);
+        var imgData = ctx.getImageData(0, 0, vw, vh);
+        // Manipulate gray -> gaussian -> canny
+        jsfeat.imgproc.grayscale(imgData.data, vw, vh, img_u8);
+        // TODO: Variables for magic numbers
+        jsfeat.imgproc.gaussian_blur(img_u8, img_u8, KERNEL, 0);
+        jsfeat.imgproc.canny(img_u8, img_u8, LOW_THRES, HIGH_THRES);
+
+        // Render back result
+        var data_u32 = new Uint32Array(imgData.data.buffer);
+        var alpha = (0xFF << 24);
+        var i = img_u8.cols * img_u8.rows;
+        var pix = 0;
+
+        while (--i >= 0) {
+            pix = img_u8.data[i];
+            data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+        }
+
+        ctx.putImageData(imgData, 0, 0);
     }
 
     // Event handlers
@@ -131,7 +154,7 @@ window.onload = function() {
 <body>
     <div id="container">
         <canvas id="c"></canvas>
-        <video muted autoplay></video>
+{#        <video muted autoplay></video>#}
     </div>
     <br>
     <div class="buttons">
