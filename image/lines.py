@@ -1,9 +1,5 @@
-import cv2
-import numpy as np
-
-# CONSTANTS
+from cv2 import ximgproc
 
 
-def refine_lines(img):
-
-    return img
+def thin_lines(img):
+    return ximgproc.thinning(img, thinningType=ximgproc.THINNING_ZHANGSUEN)

@@ -54,10 +54,10 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     cv2.imwrite(f'{pre}/colors/k.png', k)
 
     # Lines
-    b_lines = image.refine_lines(b)
-    g_lines = image.refine_lines(g)
-    r_lines = image.refine_lines(r)
-    k_lines = image.refine_lines(k)
+    b_lines = image.thin_lines(b)
+    g_lines = image.thin_lines(g)
+    r_lines = image.thin_lines(r)
+    k_lines = image.thin_lines(k)
     cv2.imwrite(f'{pre}/lines/b.png', b_lines)
     cv2.imwrite(f'{pre}/lines/g.png', g_lines)
     cv2.imwrite(f'{pre}/lines/r.png', r_lines)
