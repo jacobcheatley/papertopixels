@@ -1,10 +1,10 @@
 from flask import Flask, request, redirect, render_template, url_for, flash, send_from_directory
 import api
-import config
+import app_config
 import os
 
 app = Flask(__name__)
-app.config.from_object(config.Config)
+app.config.from_object(app_config.Config)
 maps_folder = os.path.join(app.root_path, 'maps')
 
 

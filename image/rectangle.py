@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-# Constants
+# CONSTANTS
 MORPH = 7
 CANNY = 250
 

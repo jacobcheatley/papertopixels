@@ -1,7 +1,9 @@
 import cv2
+import numpy as np
+
+# CONSTANTS
 
 
-def find_lines(img):
-    edges = cv2.Canny(img, 100, 200)
+def refine_lines(img):
 
-    return edges
+    return img

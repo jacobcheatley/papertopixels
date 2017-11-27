@@ -56,8 +56,6 @@ window.onload = function() {
     // Set up
     var img_u8;
 
-    window.video = videoElement;
-
     // Start of running
     navigator.mediaDevices
         .enumerateDevices()
@@ -85,7 +83,14 @@ window.onload = function() {
 
         var constraints = {
             video: {
-                deviceId: {exact: videoDevices[currentDevice]}
+                deviceId: {exact: videoDevices[currentDevice]},
+{#                optional: [#}
+{#                    {minWidth:320},#}
+{#                    {minWidth:640},#}
+{#                    {minWidth:1024},#}
+{#                    {minWidth:1280},#}
+{#                    {minWidth:1920}#}
+{#                ]#}
                 // TODO: Resolution finding (https://webrtchacks.com/getusermedia-resolutions-3/?)
             }
         };
@@ -120,7 +125,10 @@ window.onload = function() {
     function draw() {
         requestAnimationFrame(draw);
 
-        if (vw === 0) adjust();
+        if (vw === 0) {
+            adjust();
+            return;
+        }
 
         ctx.clearRect(0, 0, vw, vh);
 
@@ -154,7 +162,6 @@ window.onload = function() {
 <body>
     <div id="container">
         <canvas id="c"></canvas>
-{#        <video muted autoplay></video>#}
     </div>
     <br>
     <div class="buttons">
