@@ -37,12 +37,24 @@ def get_all_lines(*img_and_labels):
             if hierarchy[0][i][3] == -1:  # Ensure only "outer" contours - ones with no parents
                 closed = np.asscalar(hierarchy[0][i][2] != -1)  # If this has a child, it must be a loop
                 # TODO: Find points of discontinuity and reorder unique list
-                # TODO: Closed shapes with knobs on them aren't identified correctly
-                points = contour.squeeze().tolist()
+                # TODO: Closed shapes with knobs on them act strangely
+                # TODO: Remove duplicated points from lines
+                # TODO: Branche detection
+                points = contour.squeeze()
+
+                if not closed:
+                    # Check for the two points where stuff starts looping back
+                    # And grab the bits just before that
+                    rolled = np.roll(points, 2, axis=0)
+                    loop = rolled == points
+                    indices = np.where(loop.any(axis=1))[0]
+                    start = indices[0] - 1
+                    end = indices[1]
+                    points = points.take(range(start, end), axis=0, mode='wrap')
+
                 yield {
                     'color': label,
-                    'len': contour.shape[0],
-                    'uniq_len': np.unique(contour, axis=0).shape[0],
+                    'len': points.shape[0],
                     'closed': closed,
-                    'points': points,
+                    'points': points.tolist(),
                 }
