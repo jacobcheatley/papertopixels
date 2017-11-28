@@ -83,9 +83,6 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     _json_save(
         {
             'id': map_id,
-            'original_size': img.shape[:2],
-            'scale_size': scaled.shape[:2],
-            'dim': list(rect.shape),
             'ratio': 1.4142,
             'lines': lines
         }

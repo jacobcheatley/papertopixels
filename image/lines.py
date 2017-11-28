@@ -32,14 +32,17 @@ def contour_image(img, contours):
 def get_all_lines(*img_and_labels):
     for img, label in img_and_labels:
         _, contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        # TODO: A bunch more stuff with hierarchies
-        # Possible problem - weird bits on the INSIDE of shapes
-        closed = False
+        # TODO: Possible problem - weird bits on the INSIDE of shapes
         for i, contour in enumerate(contours):
-            # TODO: Loop detection
-            if hierarchy[0][i][3] == -1:  # Ensure only "outer" contours
+            if hierarchy[0][i][3] == -1:  # Ensure only "outer" contours - ones with no parents
+                closed = np.asscalar(hierarchy[0][i][2] != -1)  # If this has a child, it must be a loop
+                # TODO: Find points of discontinuity and reorder unique list
+                # TODO: Closed shapes with knobs on them aren't identified correctly
+                points = contour.squeeze().tolist()
                 yield {
                     'color': label,
-                    'points': contour.squeeze().tolist(),
-                    'closed': closed
+                    'len': contour.shape[0],
+                    'uniq_len': np.unique(contour, axis=0).shape[0],
+                    'closed': closed,
+                    'points': points,
                 }
