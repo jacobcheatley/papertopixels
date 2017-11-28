@@ -23,7 +23,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     map_id = get_next_free()  # TODO: support concurrency properly
     pre = f'image/out/{map_id}'
     os.makedirs(f'{pre}/colors', exist_ok=True)
-    os.makedirs(f'{pre}/lines', exist_ok=True)
+    os.makedirs(f'{pre}/lines/contours', exist_ok=True)
 
     # Get image into memory to be worked with in CV
     in_memory = BytesIO()
@@ -53,15 +53,32 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     cv2.imwrite(f'{pre}/colors/r.png', r)
     cv2.imwrite(f'{pre}/colors/k.png', k)
 
-    # Lines
-    b_lines = image.thin_lines(b)
-    g_lines = image.thin_lines(g)
-    r_lines = image.thin_lines(r)
-    k_lines = image.thin_lines(k)
-    cv2.imwrite(f'{pre}/lines/b.png', b_lines)
-    cv2.imwrite(f'{pre}/lines/g.png', g_lines)
-    cv2.imwrite(f'{pre}/lines/r.png', r_lines)
-    cv2.imwrite(f'{pre}/lines/k.png', k_lines)
+    # Thinning
+    b_thin = image.thin_lines(b)
+    g_thin = image.thin_lines(g)
+    r_thin = image.thin_lines(r)
+    k_thin = image.thin_lines(k)
+    cv2.imwrite(f'{pre}/lines/b.png', b_thin)
+    cv2.imwrite(f'{pre}/lines/g.png', g_thin)
+    cv2.imwrite(f'{pre}/lines/r.png', r_thin)
+    cv2.imwrite(f'{pre}/lines/k.png', k_thin)
+
+    # Connectivity
+    b_contours = image.get_contours(b_thin)
+    g_contours = image.get_contours(g_thin)
+    r_contours = image.get_contours(r_thin)
+    k_contours = image.get_contours(k_thin)
+    cv2.imwrite(f'{pre}/lines/contours/b.png', image.contour_image(b_thin, b_contours))
+    cv2.imwrite(f'{pre}/lines/contours/g.png', image.contour_image(g_thin, g_contours))
+    cv2.imwrite(f'{pre}/lines/contours/r.png', image.contour_image(r_thin, r_contours))
+    cv2.imwrite(f'{pre}/lines/contours/k.png', image.contour_image(k_thin, k_contours))
+
+    lines = list(image.get_all_lines(
+        (b_thin, 'b'),
+        (g_thin, 'g'),
+        (r_thin, 'r'),
+        (k_thin, 'k'),
+    ))
 
     _json_save(
         {
@@ -70,7 +87,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
             'scale_size': scaled.shape[:2],
             'dim': list(rect.shape),
             'ratio': 1.4142,
-            'lines': []
+            'lines': lines
         }
     )
 

@@ -1,48 +1,45 @@
-from cv2 import ximgproc
 import cv2
 import numpy as np
+import random
 
 
-def _remove_stair(thinned: np.ndarray):
-    # This will probably be slow because python loops
-    # Based on remove_staircases from https://github.com/yati-sagade/zhang-suen-thinning/blob/master/zhangsuen.cpp
-    # TODO: Profiling?
-    points_y = []
-    points_x = []
-    rows, cols = np.where(thinned == 255)
-    for i in range(2):
-        for y, x in zip(rows, cols):
-            # Center and 8 directional neighbours
-            c = thinned[y, x]
-            if c == 0:
-                continue
-            nw, n, ne = thinned[y - 1, x - 1:x + 2]
-            w = thinned[y, x - 1]
-            e = thinned[y, x + 1]
-            sw, s, se = thinned[y + 1, x - 1:x + 2]
-
-            # TODO: Make this code readable and understandable
-            if i == 0:
-                # North biased staircase removal
-                if not (c and not (n and ((e and not ne and not sw and (not w or not s)) or (w and not nw and not se and (not e or not s))))):
-                    points_y.append(y)
-                    points_x.append(x)
-            else:
-                # South biased staircase removal
-                if not (c and not (s and ((e and not se and not nw and (not w or not n)) or (w and not sw and not ne and (not e or not n))))):
-                    points_y.append(y)
-                    points_x.append(x)
-
-            thinned[points_y, points_x] = 0
-            points_y.clear()
-            points_x.clear()
+def random_color():
+    return random.randint(0, 256), random.randint(0, 256), random.randint(0, 256)
 
 
-def thin_lines(img, destair=True):
-    # TODO: Holt's staircase removal algorithm?
-    thinned = ximgproc.thinning(img, thinningType=ximgproc.THINNING_ZHANGSUEN)
+def show_contours(img, label='Contours'):
+    _, contours, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    res = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    for i in range(len(contours)):
+        cv2.drawContours(res, contours, i, random_color())
+    cv2.imshow(label, res)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-    if destair:
-        _remove_stair(thinned)
 
-    return thinned
+def get_contours(img):
+    _, contours, h = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
+
+
+def contour_image(img, contours):
+    res = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    for i in range(len(contours)):
+        cv2.drawContours(res, contours, i, random_color())
+    return res
+
+
+def get_all_lines(*img_and_labels):
+    for img, label in img_and_labels:
+        _, contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # TODO: A bunch more stuff with hierarchies
+        # Possible problem - weird bits on the INSIDE of shapes
+        closed = False
+        for i, contour in enumerate(contours):
+            # TODO: Loop detection
+            if hierarchy[0][i][3] == -1:  # Ensure only "outer" contours
+                yield {
+                    'color': label,
+                    'points': contour.squeeze().tolist(),
+                    'closed': closed
+                }
