@@ -33,9 +33,14 @@ def camera_preview():
 
 
 # TODO: remove and use apache file serving later
-@app.route('/map/<map_id>', methods=['GET'])
+@app.route('/map/<int:map_id>', methods=['GET'])
 def get_map(map_id: int):
     return send_from_directory(maps_folder, f'{map_id}.json')
+
+
+@app.route('/view', methods=['GET'])
+def view_map():
+    return render_template('view.html')
 
 
 if __name__ == '__main__':

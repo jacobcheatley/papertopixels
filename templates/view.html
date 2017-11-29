@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paper to Pixels Uploader</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        #container {
+            width: 96%;
+            margin: 0;
+            padding-left: 2%;
+            padding-right: 2%;
+        }
+        canvas {
+            margin: auto;
+        }
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+window.jQuery || document.write('<script src="{{ url_for('static', filename='jquery.js') }}">\x3C/script>');
+$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+$(function() {
+    // Constants
+    var colors = {
+        'k': '#000000',
+        'r': '#ff0000',
+        'g': '#00ff00',
+        'b': '#0000ff'
+    };
+
+    // Elements
+    var message_element = $('#message');
+    var container = $('#container');
+    var canvas = $('#canvas')[0];
+
+    // Variables
+    var current_map = null;
+    var ctx = canvas.getContext('2d');
+
+    // Variables
+    function showMessage(message) {
+        message_element.css('color', 'black');
+        message_element.text(message);
+    }
+
+    function showErr(message) {
+        message_element.css('color', 'red');
+        message_element.text(message);
+    }
+
+    function redrawMap() {
+        if (current_map === null)
+            return;
+
+        var map = current_map;
+        canvas.width = container.width();
+        console.log(container.width());
+        var cw = canvas.width;
+        canvas.height = cw / map.ratio;
+        var ch = canvas.height;
+
+        ctx.clearRect(0, 0, cw, ch);
+
+        map.lines.forEach(function(line) {
+            ctx.strokeStyle = colors[line.color];
+            ctx.beginPath();
+            ctx.moveTo(cw * line.points[0][0] / 512, ch * line.points[0][1] / 512);
+            line.points.forEach(function(p) {
+                ctx.lineTo(cw * p[0] / 512, ch * p[1] / 512);
+            });
+            if (line.closed) {
+                ctx.lineTo(cw * line.points[0][0] / 512, ch * line.points[0][1] / 512);
+            }
+            ctx.stroke();
+        })
+    }
+
+    function getMap() {
+        var map_id = $('input[name=map]').val();
+
+        $.getJSON($SCRIPT_ROOT + '/map/' + map_id, {}, function (data) {
+            current_map = data;
+            redrawMap();
+            showMessage("Map #" + map_id);
+        }).fail(function () {
+            showErr('Failed to get map "' + map_id + '"');
+        });
+
+        return false;
+    }
+
+    // Events
+    $('#view').on('click', getMap);
+
+    $('input[name=map]').on('keypress', function(e) {
+        if (e.which == 13) {
+            getMap();
+        }
+    });
+
+    $(window).on('resize', redrawMap);
+})
+    </script>
+</head>
+<body>
+    <h1>Map Preview</h1>
+    <input type="number" size="2" name="map" min="0" value="0">
+    <button id=view>View</button>
+    <span id="message">Enter a map ID to preview</span>
+    <br>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+    </div>
+</body>
+</html>

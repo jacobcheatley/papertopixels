@@ -39,7 +39,7 @@ def get_all_lines(*img_and_labels):
                 # TODO: Find points of discontinuity and reorder unique list
                 # TODO: Closed shapes with knobs on them act strangely
                 # TODO: Remove duplicated points from lines
-                # TODO: Branche detection
+                # TODO: Branch detection
                 points = contour.squeeze()
 
                 if not closed:

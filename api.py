@@ -7,10 +7,6 @@ import json
 import os
 
 
-def get_map(map_id: int):
-    return {'id': map_id}
-
-
 def _json_save(dct: dict):
     with open(f'maps/{dct["id"]}.json', 'w') as out:
         json.dump(dct, out)
