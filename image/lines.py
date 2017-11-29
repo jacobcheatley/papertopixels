@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import random
 
+# CONSTANTS
+EPSILON = 1
+
 
 def random_color():
     return random.randint(0, 256), random.randint(0, 256), random.randint(0, 256)
@@ -18,7 +21,7 @@ def show_contours(img, label='Contours'):
 
 
 def get_contours(img):
-    _, contours, h = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, h = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     return contours
 
 
@@ -52,9 +55,10 @@ def get_all_lines(*img_and_labels):
                     end = indices[1]
                     points = points.take(range(start, end), axis=0, mode='wrap')
 
+                points = cv2.approxPolyDP(points, EPSILON, closed).squeeze()
+
                 yield {
                     'color': label,
-                    'len': points.shape[0],
                     'closed': closed,
                     'points': points.tolist(),
                 }
