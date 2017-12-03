@@ -33,7 +33,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     cv2.imwrite(f'{pre}/scaled.png', scaled)
 
     # Find paper rectangle
-    edges, highlight, rect = image.edges_highlight_rect(scaled)
+    edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
     cv2.imwrite(f'{pre}/edges.png', edges)  # *
     cv2.imwrite(f'{pre}/highlight.png', highlight)  # *
     cv2.imwrite(f'{pre}/rect.png', rect)
@@ -79,7 +79,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     _json_save(
         {
             'id': map_id,
-            'ratio': 1.4142,
+            'ratio': ratio,
             'lines': lines
         }
     )

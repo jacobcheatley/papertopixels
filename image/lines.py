@@ -39,9 +39,7 @@ def get_all_lines(*img_and_labels):
         for i, contour in enumerate(contours):
             if hierarchy[0][i][3] == -1:  # Ensure only "outer" contours - ones with no parents
                 closed = np.asscalar(hierarchy[0][i][2] != -1)  # If this has a child, it must be a loop
-                # TODO: Find points of discontinuity and reorder unique list
                 # TODO: Closed shapes with knobs on them act strangely
-                # TODO: Remove duplicated points from lines
                 # TODO: Branch detection
                 points = contour.squeeze()
 
