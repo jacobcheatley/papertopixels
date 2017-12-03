@@ -88,4 +88,4 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
 
 def get_next_free():
-    return len(os.listdir('./maps'))
+    return len(os.listdir('maps'))

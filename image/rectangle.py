@@ -56,7 +56,7 @@ def approximate_ratio(points, w, h):
     v0 = h / 2
     vert = (points - np.array([u0, v0])).squeeze()
     # bl, br, tl, tr -> ATM this is not right
-    m2, m0, m1, m3 = np.append(vert, [[1], [1], [1], [1]], axis=1)
+    m0, m1, m2, m3 = np.append(vert, [[1], [1], [1], [1]], axis=1)
 
     k2 = np.dot(np.cross(m0, m3), m2) / np.dot(np.cross(m1, m3), m2)
     k3 = np.dot(np.cross(m0, m3), m1) / np.dot(np.cross(m2, m3), m1)
