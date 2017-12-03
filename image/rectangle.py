@@ -49,6 +49,7 @@ def edges_highlight_rect_ratio(img):
 
 def approximate_ratio(points, w, h):
     # https://stackoverflow.com/a/1222855
+    # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.578.2050&rep=rep1&type=pdf
     # I love how mathematicians don't use clear variable names
     # s = 1 here, square pixels
     u0 = w / 2

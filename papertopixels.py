@@ -5,6 +5,8 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(app_config.Config)
+app.secret_key = 'test'
+app.config['SESSION_TYPE'] = 'filesystem'
 maps_folder = os.path.join(app.root_path, 'maps')
 
 
@@ -44,7 +46,4 @@ def view_map():
 
 
 if __name__ == '__main__':
-    app.secret_key = 'test'
-    app.config['SESSION_TYPE'] = 'filesystem'
-
-    app.run(host='0.0.0.0', ssl_context=('ssl/certificate.crt', 'ssl/privateKey.key'))
+    app.run(host='0.0.0.0')
