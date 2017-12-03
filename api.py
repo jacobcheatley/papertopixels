@@ -6,6 +6,8 @@ import image
 import json
 import os
 
+MAPS_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maps')
+
 
 def _json_save(dct: dict):
     with open(f'maps/{dct["id"]}.json', 'w') as out:
@@ -88,4 +90,4 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
 
 def get_next_free():
-    return len(os.listdir('maps'))
+    return len(os.listdir(MAPS_FOLDER))
