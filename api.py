@@ -11,7 +11,7 @@ MAPS_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maps')
 
 
 def _json_save(dct: dict):
-    with open(f'maps/{dct["id"]}.json', 'w') as out:
+    with open(f'{MAPS_FOLDER}/{dct["id"]}.json', 'w') as out:
         json.dump(dct, out)
 
 
