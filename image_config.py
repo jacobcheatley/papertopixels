@@ -1,0 +1,1 @@
+SAVE_IMAGE = True
