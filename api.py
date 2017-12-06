@@ -90,6 +90,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         {
             'id': map_id,
             'ratio': ratio,
+            'resolution': image_config.RESOLUTION,
             'lines': lines
         }
     )

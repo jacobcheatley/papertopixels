@@ -58,5 +58,5 @@ def get_all_lines(*img_and_labels):
                 yield {
                     'color': label,
                     'closed': closed,
-                    'points': points.tolist(),
+                    'points': [{'x': x, 'y': y} for x, y in points.tolist()],
                 }

@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 from math import sqrt
+import image_config
 
 # CONSTANTS
 MORPH = 7
 CANNY = 250
 
-WIDTH = 512.0
-HEIGHT = 512.0
+WIDTH = float(image_config.RESOLUTION)
+HEIGHT = float(image_config.RESOLUTION)
 MARGIN = 0.0
 
 corners = np.array([[[MARGIN, MARGIN]],

@@ -63,17 +63,19 @@ $(function() {
         canvas.height = cw / map.ratio;
         var ch = canvas.height;
 
+        var res = map.resolution;
+
         ctx.clearRect(0, 0, cw, ch);
 
         map.lines.forEach(function(line) {
             ctx.strokeStyle = colors[line.color];
             ctx.beginPath();
-            ctx.moveTo(cw * line.points[0][0] / 512, ch * line.points[0][1] / 512);
+            ctx.moveTo(cw * line.points[0].x / res, ch * line.points[0].y / res);
             line.points.forEach(function(p) {
-                ctx.lineTo(cw * p[0] / 512, ch * p[1] / 512);
+                ctx.lineTo(cw * p.x / res, ch * p.y / res);
             });
             if (line.closed) {
-                ctx.lineTo(cw * line.points[0][0] / 512, ch * line.points[0][1] / 512);
+                ctx.lineTo(cw * line.points[0].x / res, ch * line.points[0].y / res);
             }
             ctx.stroke();
         })
