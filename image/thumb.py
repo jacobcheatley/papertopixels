@@ -4,7 +4,7 @@ import numpy as np
 HEIGHT = 256
 
 
-def generate_preview(map_data):
+def generate_thumb(map_data):
     width = int(HEIGHT * map_data['ratio'])
     res = map_data['resolution']
 

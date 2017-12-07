@@ -9,7 +9,7 @@ import image_config
 
 path = os.path.dirname(os.path.realpath(__file__))
 MAPS_FOLDER = os.path.join(path, 'maps')
-PREVIEW_FOLDER = os.path.join(path, 'preview')
+THUMB_FOLDER = os.path.join(path, 'thumb')
 
 
 def _json_save(dct: dict):
@@ -90,8 +90,8 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
     map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
 
-    preview = image.generate_preview(map_data)
-    cv2.imwrite(f'{PREVIEW_FOLDER}/{map_id}.png', preview)
+    thumb = image.generate_thumb(map_data)
+    cv2.imwrite(f'{THUMB_FOLDER}/{map_id}.png', thumb)
 
     _json_save(map_data)
 

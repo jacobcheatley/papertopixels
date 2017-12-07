@@ -8,6 +8,7 @@ app.config.from_object(app_config.Config)
 app.secret_key = 'test'
 app.config['SESSION_TYPE'] = 'filesystem'
 maps_folder = os.path.join(app.root_path, 'maps')
+thumb_folder = os.path.join(app.root_path, 'thumb')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -38,6 +39,11 @@ def camera_preview():
 @app.route('/map/<int:map_id>', methods=['GET'])
 def get_map(map_id: int):
     return send_from_directory(maps_folder, f'{map_id}.json')
+
+
+@app.route('/thumb/<int:map_id>', methods=['GET'])
+def get_thumbnail(map_id: int):
+    return send_from_directory(thumb_folder, f'{map_id}.png')
 
 
 @app.route('/view', methods=['GET'])
