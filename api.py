@@ -7,7 +7,9 @@ import json
 import os
 import image_config
 
-MAPS_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maps')
+path = os.path.dirname(os.path.realpath(__file__))
+MAPS_FOLDER = os.path.join(path, 'maps')
+PREVIEW_FOLDER = os.path.join(path, 'preview')
 
 
 def _json_save(dct: dict):
@@ -86,14 +88,12 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         (k_thin, 'k'),
     ))
 
-    _json_save(
-        {
-            'id': map_id,
-            'ratio': ratio,
-            'resolution': image_config.RESOLUTION,
-            'lines': lines
-        }
-    )
+    map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
+
+    preview = image.generate_preview(map_data)
+    cv2.imwrite(f'{PREVIEW_FOLDER}/{map_id}.png', preview)
+
+    _json_save(map_data)
 
     return map_id
 

@@ -4,3 +4,4 @@ from .lighting import *
 from .color import *
 from .thinning import *
 from .lines import *
+from .preview import *
