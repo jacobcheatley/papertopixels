@@ -46,6 +46,11 @@ def get_thumbnail(map_id: int):
     return send_from_directory(thumb_folder, f'{map_id}.png')
 
 
+@app.route('/maps', methods=['GET'])
+def get_map_list():
+    return api.get_all_maps()
+
+
 @app.route('/view', methods=['GET'])
 def view_map():
     return render_template('view.html')

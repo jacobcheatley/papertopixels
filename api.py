@@ -100,3 +100,11 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
 def get_next_free():
     return len(os.listdir(MAPS_FOLDER))
+
+
+def get_all_maps():
+    return json.dumps(list(reversed([int(f.split('.')[0]) for f in os.listdir(MAPS_FOLDER)])))
+
+
+if __name__ == '__main__':
+    print(get_all_maps())
