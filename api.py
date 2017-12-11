@@ -106,8 +106,4 @@ def get_all_maps():
     name_stat = [(fn, os.stat(os.path.join(MAPS_FOLDER, fn))) for fn in os.listdir(MAPS_FOLDER)]
     ints = [int(ns[0].split('.')[0]) for ns in sorted(name_stat, key=lambda ns: ns[1].st_ctime, reverse=True)]
 
-    return json.dumps(ints)
-
-
-if __name__ == '__main__':
-    print(get_all_maps())
+    return json.dumps({'maps': ints})
