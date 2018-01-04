@@ -43,6 +43,9 @@ def get_all_lines(*img_and_labels):
                 # TODO: Branch detection
                 points = contour.squeeze()
 
+                if len(points.shape) != 2:
+                    continue  # Must be a single point. Ignore.
+
                 if not closed:
                     # Check for the two points where stuff starts looping back
                     # And grab the bits just before that
@@ -54,9 +57,11 @@ def get_all_lines(*img_and_labels):
                     points = points.take(range(start, end), axis=0, mode='wrap')
 
                 points = cv2.approxPolyDP(points, EPSILON, closed).squeeze()
+                (_, _), radius = cv2.minEnclosingCircle(points)
 
-                yield {
-                    'color': label,
-                    'closed': closed,
-                    'points': [{'x': x, 'y': y} for x, y in points.tolist()],
-                }
+                if radius > 5:
+                    yield {
+                        'color': label,
+                        'closed': closed,
+                        'points': [{'x': x, 'y': y} for x, y in points.tolist()],
+                    }
