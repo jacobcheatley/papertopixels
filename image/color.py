@@ -51,17 +51,12 @@ def split_colors(img):
     r = cv2.bitwise_and(r, edge_mask)
     k = cv2.bitwise_and(k, edge_mask)
 
-    # Remove some noise from black - using hit or miss
-    # https://stackoverflow.com/questions/46143800/removing-isolated-pixels-using-opencv
-    kernel1 = np.array([[0, 0, 0],
-                        [0, 1, 0],
-                        [0, 0, 0]], np.uint8)
-    kernel2 = np.array([[1, 1, 1],
-                        [1, 0, 1],
-                        [1, 1, 1]], np.uint8)
-    hom1 = cv2.morphologyEx(k, cv2.MORPH_ERODE, kernel1)
-    hom2 = cv2.morphologyEx(cv2.bitwise_not(k), cv2.MORPH_ERODE, kernel2)
-    hom = cv2.bitwise_not(cv2.bitwise_and(hom1, hom2))
-    k = cv2.bitwise_and(k, hom)
+    # Do small median blur to remove isolated pixels
+    b = cv2.medianBlur(b, 3)
+    g = cv2.medianBlur(g, 3)
+    r = cv2.medianBlur(r, 3)
+    k = cv2.medianBlur(k, 3)
+    # TODO: Improve method to remove connected components with too
+    # TODO: few pixels or too thin throughout
 
     return b, g, r, k
