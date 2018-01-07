@@ -31,13 +31,19 @@ def edges_highlight_rect_ratio(img):
     rect = None
     ratio = 1.4142
 
-    # Find a rectangle
-    # TODO: Largest rectangle
+    # Find largest rectangle
+    # TODO: Rough backgrounds need different filter work
+    max_area = 0
+
     for cont in contours:
         arc_len = cv2.arcLength(cont, True)
         approx = cv2.approxPolyDP(cont, 0.1 * arc_len, True)
 
-        if len(approx) == 4:
+        area = cv2.contourArea(cont)
+
+        if area > max_area and len(approx) == 4:
+            max_area = area
+
             pts_src = np.array(approx, np.float32)
 
             if np.argmin(np.sum(pts_src.squeeze(), axis=1)) != 0:
@@ -49,7 +55,6 @@ def edges_highlight_rect_ratio(img):
             cv2.drawContours(img, [approx], -1, (255, 0, 0), 2)
             # ratio = approximate_ratio(pts_src, img.shape[1], img.shape[0])
             # TODO: Disabled for now, having problems with ratio calculations
-            break
 
     return edges, img, rect, ratio
 
