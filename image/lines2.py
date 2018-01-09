@@ -95,7 +95,7 @@ def get_all_lines2(*img_and_labels):
                             end_segment()
                             break
 
-            print('SEGS', '\n'.join(str(l) for l in segments))
+            print('COMPONENT\nseg: ' + '\nseg: '.join(str(l) for l in segments))
 
         # Search for search start locations
         for y in range(img.shape[0]):
@@ -109,5 +109,5 @@ def get_all_lines2(*img_and_labels):
 
 
 if __name__ == '__main__':
-    test = cv2.imread('out/17/lines/r.png', cv2.IMREAD_GRAYSCALE)
+    test = cv2.imread('out/17/lines/k.png', cv2.IMREAD_GRAYSCALE)
     get_all_lines2((test, 'test-red'))
