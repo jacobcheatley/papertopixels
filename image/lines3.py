@@ -3,19 +3,22 @@ import cv2
 from collections import defaultdict
 from image.cycles import simple_cycles
 
+# CONSTANTS
+EPSILON = 1
 NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
 
 
 def join_segments(segments, terminals):
     """Figure out how all the segments should join, then return all simplified lines"""
-    print('COMPONENT')
-    for index, seg in enumerate(segments):
-        print(f'-seg{index}', seg[0], seg[-1], len(seg))
+    # print('COMPONENT')
+    # for index, seg in enumerate(segments):
+    #     print(f'-seg{index}', seg[0], seg[-1], len(seg))
 
-    print(terminals)
+    terminals = list(terminals)
     removed = set()  # for single loops and removed loops
     graph = defaultdict(list)  # (index, term?): [(index, term?)]
+    chosen_cycles = []
 
     def all_paths(v):
         """Generate the maximal cycle-free paths in graph starting at v.
@@ -52,6 +55,7 @@ def join_segments(segments, terminals):
     for si, seg in enumerate(segments):
         if seg[0] == seg[-1]:
             removed.add(si)
+            chosen_cycles.append([(si, False)])
             continue
         for ti, term in enumerate(terminals):
             if seg[0] == term or seg[-1] == term:
@@ -59,10 +63,9 @@ def join_segments(segments, terminals):
                 graph[(si, False)].append((ti, True))
 
     # Get out the largest cycles
-    print('GRAPH', graph)
+    # print('GRAPH', graph)
 
     cycles = sorted([c for c in simple_cycles(graph) if len(c) > 2], key=path_len)
-    chosen_cycles = []
     while cycles:
         # Grab largest, remove things that share segments
         largest = cycles.pop()
@@ -78,9 +81,9 @@ def join_segments(segments, terminals):
                 graph[key] = [n for n in neighs if n not in rmv]
         cycles = [c for c in cycles if not any(n in rmv for n in c)]
 
-    print('CYCLES', chosen_cycles)
-    print('GRAPH', graph)
-    print('REMOVED', removed)
+    # print('CYCLES', chosen_cycles)
+    # print('GRAPH', graph)
+    # print('REMOVED', removed)
 
     # Grab all possible paths
     found_paths = []
@@ -91,8 +94,8 @@ def join_segments(segments, terminals):
 
     found_paths.sort(key=path_len)
 
-    print('PATHS', found_paths)
-    print('LENGTHS', [path_len(path) for path in found_paths])
+    # print('PATHS', found_paths)
+    # print('LENGTHS', [path_len(path) for path in found_paths])
 
     # Get out the largest linear paths
     chosen_paths = []
@@ -103,16 +106,42 @@ def join_segments(segments, terminals):
         rmv = [node for node in largest if not node[1]]  # Remove with matching segment
         found_paths = [p for p in found_paths if not any(n in rmv for n in p)]
 
-    print('FINAL CYCLES', chosen_cycles)
-    print('FINAL PATHS', chosen_paths)
+    # print('FINAL CYCLES', chosen_cycles)
+    # print('FINAL PATHS', chosen_paths)
 
-    return []
+    final = []
+
+    def final_process(group, closed):
+        # Group is of format [(si, term)]
+        partial = []
+        if len(group) == 1:  # Self loop or isolated
+            partial = segments[group[0][0]]
+        else:
+            for i, (si, term) in enumerate(group):
+                if term: continue
+                segment = segments[si]
+                if i == len(group) - 1:  # If we're the last, we need to use previous
+                    prev_term = terminals[group[i - 1][0]]
+                    should_reverse = segment[0] != prev_term
+                else:
+                    next_term = terminals[group[i + 1][0]]
+                    should_reverse = segment[-1] != next_term
+                partial += reversed(segment) if should_reverse else segment
+
+        final.append((cv2.approxPolyDP(np.asarray(partial), EPSILON, closed).squeeze(), closed))
+
+    for cycle in chosen_cycles:
+        final_process(cycle, True)
+    for path in chosen_paths:
+        final_process(path, False)
+
+    # Output format must be [([points], closed)]
+    return final
 
 
-def get_all_lines2(*img_and_labels):
+def get_all_lines(*img_and_labels):
     """From each color channel, yield out all the labelled lines"""
     for img, label in img_and_labels:
-        print(label)
         visited = set()
 
         def exhaust(y_s, x_s):
@@ -221,11 +250,15 @@ def get_all_lines2(*img_and_labels):
                     segments, terminals = exhaust(y, x)
                     # Segments is none if the total shape is too small
                     if segments is not None:
-                        join_segments(segments, terminals)
-
-        yield None  # TODO: Remove this
+                        lines = join_segments(segments, terminals)
+                        for points, closed in lines:
+                            yield {
+                                'color': label,
+                                'closed': closed,
+                                'points': [{'x': int(x), 'y': int(y)} for y, x in points]
+                            }
 
 
 if __name__ == '__main__':
     test = cv2.imread('data/mawp.png', cv2.IMREAD_GRAYSCALE)
-    list(get_all_lines2((test, 'test')))
+    print(list(get_all_lines((test, 'test'))))

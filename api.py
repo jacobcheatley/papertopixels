@@ -25,7 +25,7 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     if image_config.SAVE_IMAGE:
         pre = f'image/out/{map_id}'
         os.makedirs(f'{pre}/colors', exist_ok=True)
-        os.makedirs(f'{pre}/lines/contours', exist_ok=True)
+        os.makedirs(f'{pre}/lines', exist_ok=True)
 
     # Get image into memory to be worked with in CV
     in_memory = BytesIO()
@@ -69,17 +69,6 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         cv2.imwrite(f'{pre}/lines/g.png', g_thin)
         cv2.imwrite(f'{pre}/lines/r.png', r_thin)
         cv2.imwrite(f'{pre}/lines/k.png', k_thin)
-
-    # Connectivity
-    b_contours = image.get_contours(b_thin)
-    g_contours = image.get_contours(g_thin)
-    r_contours = image.get_contours(r_thin)
-    k_contours = image.get_contours(k_thin)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/lines/contours/b.png', image.contour_image(b_thin, b_contours))
-        cv2.imwrite(f'{pre}/lines/contours/g.png', image.contour_image(g_thin, g_contours))
-        cv2.imwrite(f'{pre}/lines/contours/r.png', image.contour_image(r_thin, r_contours))
-        cv2.imwrite(f'{pre}/lines/contours/k.png', image.contour_image(k_thin, k_contours))
 
     lines = list(image.get_all_lines(
         (b_thin, 'b'),
