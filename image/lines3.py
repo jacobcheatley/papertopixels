@@ -7,108 +7,104 @@ NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
 
 
-def end_complement(path):
-    return [(seg[0], -1 if seg[1] == 0 else 0) for seg in path]
-
-
 def join_segments(segments, terminals):
     """Figure out how all the segments should join, then return all simplified lines"""
-
     print('COMPONENT')
     for index, seg in enumerate(segments):
         print(f'-seg{index}', seg[0], seg[-1], len(seg))
 
-    '''
-    # Many cases will just be 1 or 2 segments, easier and faster to manually do
-    if len(segments) == 1:  # straight line or single loop
-        seg = segments[0]
-        if seg[0] == seg[-1]:  # loop
-            return [(seg[:-1], True)]
-        else:
-            return [(seg, False)]
-    elif len(segments) == 2:  # straight line, or loop with line picked up first
-        seg1, seg2 = segments[0], segments[1]
-        if seg2[0] == seg2[-1]:
-            return [(seg2[:-1], True), (seg1, False)]
-        else:
-            # Try to join up
-            if seg1[0] == seg2[0]:
-                return [(reversed(seg1[1:] + seg2), False)]
+    print(terminals)
+    removed = set()  # for single loops and removed loops
+    graph = defaultdict(list)  # (index, term?): [(index, term?)]
+
+    def all_paths(v):
+        """Generate the maximal cycle-free paths in graph starting at v.
+        graph must be a mapping from vertices to collections of
+        neighbouring vertices."""
+        path = [v]  # path traversed so far
+        seen = {v}  # set of vertices in path
+
+        def search():
+            dead_end = True
+            for neighbour in graph[path[-1]]:
+                if neighbour not in seen:
+                    dead_end = False
+                    seen.add(neighbour)
+                    path.append(neighbour)
+                    yield from search()
+                    path.pop()
+                    seen.remove(neighbour)
+            if dead_end and len(path) % 2 == 1:
+                yield list(path)
+
+        yield from search()
+
+    def path_len(path):
+        total = 0
+        for node, term in path:
+            if not term:
+                total += len(segments[node])
             else:
-                print('Uuuhh - THIS SHOULDN\'T HAPPEN')
-                return []
-    '''
+                total -= 1
+        return total
 
-    final = []
+    # Generate the graph
+    for si, seg in enumerate(segments):
+        if seg[0] == seg[-1]:
+            removed.add(si)
+            continue
+        for ti, term in enumerate(terminals):
+            if seg[0] == term or seg[-1] == term:
+                graph[(ti, True)].append((si, False))
+                graph[(si, False)].append((ti, True))
 
-    # Generating graph of linked sections
-    graph = defaultdict(list)  # (index, end (0/-1)): [(index, end (0/-1))]
-    removed = set()
-    for i1, seg1 in enumerate(segments):
-        for i2, seg2 in enumerate(segments):
-            # Self loop ignore
-            if i1 in removed or i2 in removed: continue
-            # Remove self joining loops
-            if seg2[0] == seg2[-1]:
-                final.append(([seg2[:-1]], True))
-                removed.add(i2)
-                print(f'{i2} is self loop')
-                continue
+    # Get out the largest cycles
+    print('GRAPH', graph)
 
-            # Test for connectivity
-            for t1, t2 in [(0, 0), (-1, -1), (0, -1), (-1, 0)]:
-                if (i1, t1) == (i2, t2): continue
-                if seg1[t1] == seg2[t2]:
-                    graph[(i1, t1)].append((i2, t2))
-                    # graph[i1].append(i2)
-
-    print('graph', graph)
-
-    # Find all paths through the graph
-    # Because of the way graph is structured, this is not just cycles
-    # Reverse order of length
-    paths = sorted(list(simple_cycles(graph)) +  # Paths
-                   [[(single, None)] for single in range(len(segments)) if single not in removed],  # Isolated
-                   key=lambda p: sum(len(segments[s[0]]) for s in p) - len(p))
-    print('paths', paths)
-    cycles = [p for p in paths if end_complement(p) in paths]
-    print('cycles', cycles)
-
+    cycles = sorted([c for c in simple_cycles(graph) if len(c) > 2], key=path_len)
     chosen_cycles = []
     while cycles:
-        # Grab the largest cycle, remove cycles containing those segments
+        # Grab largest, remove things that share segments
         largest = cycles.pop()
         chosen_cycles.append(largest)
-        rmv = [c[0] for c in largest]
-        # NONE of the segments can be shared
-        cycles = [p for p in cycles if not any(s in rmv for s, _ in p)]
-        paths = [p for p in paths if not any(s in rmv for s, _ in p)]
+        rmv = [node for node in largest if not node[1]]  # Remove with matching segment
+        for seg in rmv:
+            # Doing removal
+            removed.add(seg[0])
+            del graph[seg]
+        for key in graph:
+            if key[1]:  # Only bother looking at terminals
+                neighs = graph[key]
+                graph[key] = [n for n in neighs if n not in rmv]
+        cycles = [c for c in cycles if not any(n in rmv for n in c)]
 
+    print('CYCLES', chosen_cycles)
+    print('GRAPH', graph)
+    print('REMOVED', removed)
+
+    # Grab all possible paths
+    found_paths = []
+    for si in range(len(segments)):
+        if si in removed: continue
+        found_paths.extend(all_paths((si, False)))
+        found_paths.append([(si, False)])
+
+    found_paths.sort(key=path_len)
+
+    print('PATHS', found_paths)
+    print('LENGTHS', [path_len(path) for path in found_paths])
+
+    # Get out the largest linear paths
     chosen_paths = []
-    while paths:
-        # Same as cycles, but don't need to care about cycles list as well
-        largest = paths.pop()
+    while found_paths:
+        # Grab largest, remove things that share segments
+        largest = found_paths.pop()
         chosen_paths.append(largest)
-        rmv = [c[0] for c in largest]
-        paths = [p for p in paths if not any(s in rmv for s, _ in p)]
+        rmv = [node for node in largest if not node[1]]  # Remove with matching segment
+        found_paths = [p for p in found_paths if not any(n in rmv for n in p)]
 
-    print('FINAL cycles', chosen_cycles)
-    print('FINAL paths', chosen_paths)
-
-    def glue(parts, closed):
-        glued = []
-        total_parts = len(parts)
-        for index, end in parts:
-            glued += segments[index]
-        return glued, closed
-
-    for cycle in chosen_cycles:
-        final.append(glue(cycle, True))
-
-    for path in chosen_paths:
-        final.append(glue(path, False))
-
-    # print('FINAL', final)
+    print('FINAL CYCLES', chosen_cycles)
+    print('FINAL PATHS', chosen_paths)
 
     return []
 
@@ -226,6 +222,8 @@ def get_all_lines2(*img_and_labels):
                     # Segments is none if the total shape is too small
                     if segments is not None:
                         join_segments(segments, terminals)
+
+        yield None  # TODO: Remove this
 
 
 if __name__ == '__main__':
