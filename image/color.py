@@ -52,10 +52,10 @@ def split_colors(img):
     k = cv2.bitwise_and(k, edge_mask)
 
     # Do small median blur to remove isolated pixels
-    b = cv2.medianBlur(b, 3)
-    g = cv2.medianBlur(g, 3)
-    r = cv2.medianBlur(r, 3)
-    k = cv2.medianBlur(k, 3)
+    # b = cv2.medianBlur(b, 3)
+    # g = cv2.medianBlur(g, 3)
+    # r = cv2.medianBlur(r, 3)
+    # k = cv2.medianBlur(k, 3)
     # TODO: Improve method to remove connected components with too
     # TODO: few pixels or too thin throughout
 

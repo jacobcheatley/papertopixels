@@ -261,4 +261,5 @@ def get_all_lines(*img_and_labels):
 
 if __name__ == '__main__':
     test = cv2.imread('data/mawp.png', cv2.IMREAD_GRAYSCALE)
-    print(list(get_all_lines((test, 'test'))))
+    for line in get_all_lines((test, 'test')):
+        print(line)
