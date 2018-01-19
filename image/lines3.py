@@ -7,13 +7,15 @@ from image.cycles import simple_cycles
 EPSILON = 1
 NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
+DEBUG_PRINT = False
 
 
 def join_segments(segments, terminals):
     """Figure out how all the segments should join, then return all simplified lines"""
-    # print('COMPONENT')
-    # for index, seg in enumerate(segments):
-    #     print(f'-seg{index}', seg[0], seg[-1], len(seg))
+    if DEBUG_PRINT:
+        print('COMPONENT')
+        for index, seg in enumerate(segments):
+            print(f'-seg{index}', seg[0], seg[1], seg[-2], seg[-1], len(seg))
 
     terminals = list(terminals)
     removed = set()  # for single loops and removed loops
@@ -63,7 +65,8 @@ def join_segments(segments, terminals):
                 graph[(si, False)].append((ti, True))
 
     # Get out the largest cycles
-    # print('GRAPH', graph)
+    if DEBUG_PRINT:
+        print('GRAPH', graph)
 
     cycles = sorted([c for c in simple_cycles(graph) if len(c) > 2], key=path_len)
     while cycles:
@@ -81,9 +84,10 @@ def join_segments(segments, terminals):
                 graph[key] = [n for n in neighs if n not in rmv]
         cycles = [c for c in cycles if not any(n in rmv for n in c)]
 
-    # print('CYCLES', chosen_cycles)
-    # print('GRAPH', graph)
-    # print('REMOVED', removed)
+    if DEBUG_PRINT:
+        print('CYCLES', chosen_cycles)
+        print('GRAPH', graph)
+        print('REMOVED', removed)
 
     # Grab all possible paths
     found_paths = []
@@ -94,8 +98,9 @@ def join_segments(segments, terminals):
 
     found_paths.sort(key=path_len)
 
-    # print('PATHS', found_paths)
-    # print('LENGTHS', [path_len(path) for path in found_paths])
+    if DEBUG_PRINT:
+        print('PATHS', found_paths)
+        print('LENGTHS', [path_len(path) for path in found_paths])
 
     # Get out the largest linear paths
     chosen_paths = []
@@ -106,8 +111,9 @@ def join_segments(segments, terminals):
         rmv = [node for node in largest if not node[1]]  # Remove with matching segment
         found_paths = [p for p in found_paths if not any(n in rmv for n in p)]
 
-    # print('FINAL CYCLES', chosen_cycles)
-    # print('FINAL PATHS', chosen_paths)
+    if DEBUG_PRINT:
+        print('FINAL CYCLES', chosen_cycles)
+        print('FINAL PATHS', chosen_paths)
 
     final = []
 
@@ -260,6 +266,6 @@ def get_all_lines(*img_and_labels):
 
 
 if __name__ == '__main__':
-    test = cv2.imread('data/mawp.png', cv2.IMREAD_GRAYSCALE)
+    test = cv2.imread('out/29/lines/r.png', cv2.IMREAD_GRAYSCALE)
     for line in get_all_lines((test, 'test')):
         print(line)
