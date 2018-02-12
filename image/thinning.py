@@ -1,8 +1,5 @@
 from cv2 import ximgproc
-import cv2
 import numpy as np
-
-CLOSE_SE = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 
 
 def _remove_stair(thinned: np.ndarray):
@@ -37,9 +34,7 @@ def _remove_stair(thinned: np.ndarray):
 
 
 def thin_lines(img, destair=True):
-    # Do a close open to fix up gaps
-    img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, CLOSE_SE)
-
+    # Do a dilate to fix up gaps
     thinned = ximgproc.thinning(img, thinningType=ximgproc.THINNING_ZHANGSUEN)
 
     if destair:

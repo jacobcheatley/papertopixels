@@ -6,6 +6,7 @@ import image
 import json
 import os
 import image_config
+import time
 
 path = os.path.dirname(os.path.realpath(__file__))
 MAPS_FOLDER = os.path.join(path, 'maps')
@@ -15,6 +16,11 @@ THUMB_FOLDER = os.path.join(path, 'thumb')
 def _json_save(dct: dict):
     with open(f'{MAPS_FOLDER}/{dct["id"]}.json', 'w') as out:
         json.dump(dct, out)
+
+
+def print_time(fmt, start_time):
+    print(fmt.format(time.time() - start_time))
+    return time.time()
 
 
 def process_image(file: werkzeug.datastructures.FileStorage):
@@ -33,11 +39,17 @@ def process_image(file: werkzeug.datastructures.FileStorage):
     data = np.fromstring(in_memory.getvalue(), dtype=np.uint8)
     img = cv2.imdecode(data, 1)
 
+    process_start = time.time()
+    start_time = process_start
+
     # Process the image in stages
     # Scale image to max size
     scaled = image.resize(img)
     if image_config.SAVE_IMAGE:
         cv2.imwrite(f'{pre}/scaled.png', scaled)
+
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Resize {}', process_start)
 
     # Find paper rectangle
     edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
@@ -46,10 +58,16 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         cv2.imwrite(f'{pre}/highlight.png', highlight)  # *
         cv2.imwrite(f'{pre}/rect.png', rect)
 
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Rectangle {}', process_start)
+
     # Lighting correction
     light = image.normalize_light(rect)
     if image_config.SAVE_IMAGE:
         cv2.imwrite(f'{pre}/light.png', light)
+
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Lighting {}', process_start)
 
     # Color thresholding
     b, g, r, k = image.split_colors(light)
@@ -58,6 +76,9 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         cv2.imwrite(f'{pre}/colors/g.png', g)
         cv2.imwrite(f'{pre}/colors/r.png', r)
         cv2.imwrite(f'{pre}/colors/k.png', k)
+
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Color {}', process_start)
 
     # Thinning
     b_thin = image.thin_lines(b)
@@ -70,6 +91,9 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         cv2.imwrite(f'{pre}/lines/r.png', r_thin)
         cv2.imwrite(f'{pre}/lines/k.png', k_thin)
 
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Thinning {}', process_start)
+
     lines = list(image.get_all_lines(
         (b_thin, 'b'),
         (g_thin, 'g'),
@@ -77,12 +101,19 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         (k_thin, 'k'),
     ))
 
+    if image_config.PRINT_TIMES:
+        process_start = print_time('Lines {}', process_start)
+
     map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
 
     thumb = image.generate_thumb(map_data)
     cv2.imwrite(f'{THUMB_FOLDER}/{map_id}.png', thumb)
 
     _json_save(map_data)
+
+    if image_config.PRINT_TIMES:
+        print_time('Saved {}', process_start)
+        print_time('Total {}', start_time)
 
     return map_id
 
