@@ -25,7 +25,7 @@ def upload_file():
 
         if file:
             map_id = api.process_image(file)
-            return redirect(url_for('get_map', map_id=map_id))
+            return redirect(url_for('view_map', map_id=map_id))
     else:
         return render_template('upload.html')
 
@@ -51,9 +51,10 @@ def get_map_list():
     return api.get_all_maps()
 
 
-@app.route('/view', methods=['GET'])
-def view_map():
-    return render_template('view.html')
+@app.route('/view', methods=['GET'], defaults={'map_id': 0})
+@app.route('/view/<int:map_id>')
+def view_map(map_id: int):
+    return render_template('view.html', map_id=map_id)
 
 
 if __name__ == '__main__':
