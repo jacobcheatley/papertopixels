@@ -17,6 +17,7 @@ def join_segments(segments, terminals):
         for index, seg in enumerate(segments):
             print(f'-seg{index}', seg[0], seg[1], seg[-2], seg[-1], len(seg))
 
+    # Tracking containers
     terminals = list(terminals)
     removed = set()  # for single loops and removed loops
     graph = defaultdict(list)  # (index, term?): [(index, term?)]
@@ -53,7 +54,7 @@ def join_segments(segments, terminals):
                 total -= 1
         return total
 
-    # Generate the graph
+    # Generate the graph by looking for segment intersections
     for si, seg in enumerate(segments):
         if seg[0] == seg[-1]:
             removed.add(si)
@@ -134,6 +135,7 @@ def join_segments(segments, terminals):
                     should_reverse = segment[-1] != next_term
                 partial += reversed(segment) if should_reverse else segment
 
+        # Be sure to approximate the path - not every pixel really matters
         final.append((cv2.approxPolyDP(np.asarray(partial), EPSILON, closed).squeeze(), closed))
 
     for cycle in chosen_cycles:
@@ -158,6 +160,7 @@ def get_all_lines(*img_and_labels):
             comp_pixels = [0]  # To keep track of total component size. Have to keep in list to assign, gross
 
             def neighbors(pix):
+                """Get all neighbours that need to be visited"""
                 unvisit = []
                 term = []
                 # Check neighbour directions
@@ -198,7 +201,7 @@ def get_all_lines(*img_and_labels):
                 if curr is None:
                     break
 
-                current_segment = []
+                current_segment = []  # We build up segments
 
                 def end_segment():
                     segments.append(current_segment[:])

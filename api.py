@@ -30,7 +30,8 @@ def process_image(file: werkzeug.datastructures.FileStorage):
             print('Processing image')
 
         # Set up new folder for intermediate images
-        map_id = get_next_free()  # TODO: support concurrency properly
+        map_id = get_next_free()
+
         if image_config.SAVE_IMAGE:
             pre = f'image/out/{map_id}-{time.time()}'
             os.makedirs(f'{pre}/colors', exist_ok=True)
@@ -42,44 +43,45 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         data = np.fromstring(in_memory.getvalue(), dtype=np.uint8)
         img = cv2.imdecode(data, 1)
 
+        # Get start time for time debug printing
         process_start = time.time()
         start_time = process_start
 
         # Process the image in stages
         # Scale image to max size
         scaled = image.resize(img)
+
         if image_config.SAVE_IMAGE:
             cv2.imwrite(f'{pre}/scaled.png', scaled)
-
         if image_config.PRINT_TIMES:
             process_start = print_time('Resize {}', process_start)
 
         # Find paper rectangle
         edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
-        if image_config.SAVE_IMAGE:
-            cv2.imwrite(f'{pre}/edges.png', edges)  # *
-            cv2.imwrite(f'{pre}/highlight.png', highlight)  # *
-            cv2.imwrite(f'{pre}/rect.png', rect)
 
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/edges.png', edges)
+            cv2.imwrite(f'{pre}/highlight.png', highlight)
+            cv2.imwrite(f'{pre}/rect.png', rect)
         if image_config.PRINT_TIMES:
             process_start = print_time('Rectangle {}', process_start)
 
         # Lighting correction
         light = image.normalize_light(rect)
+
         if image_config.SAVE_IMAGE:
             cv2.imwrite(f'{pre}/light.png', light)
-
         if image_config.PRINT_TIMES:
             process_start = print_time('Lighting {}', process_start)
 
         # Color thresholding
         b, g, r, k = image.split_colors(light)
+
         if image_config.SAVE_IMAGE:
             cv2.imwrite(f'{pre}/colors/b.png', b)
             cv2.imwrite(f'{pre}/colors/g.png', g)
             cv2.imwrite(f'{pre}/colors/r.png', r)
             cv2.imwrite(f'{pre}/colors/k.png', k)
-
         if image_config.PRINT_TIMES:
             process_start = print_time('Color {}', process_start)
 
@@ -88,12 +90,12 @@ def process_image(file: werkzeug.datastructures.FileStorage):
         g_thin = image.thin_lines(g)
         r_thin = image.thin_lines(r)
         k_thin = image.thin_lines(k)
+
         if image_config.SAVE_IMAGE:
             cv2.imwrite(f'{pre}/lines/b.png', b_thin)
             cv2.imwrite(f'{pre}/lines/g.png', g_thin)
             cv2.imwrite(f'{pre}/lines/r.png', r_thin)
             cv2.imwrite(f'{pre}/lines/k.png', k_thin)
-
         if image_config.PRINT_TIMES:
             process_start = print_time('Thinning {}', process_start)
 
@@ -135,10 +137,12 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
 
 def get_next_free():
+    # TODO: Concurrency support
     return len(os.listdir(MAPS_FOLDER))
 
 
 def get_all_maps():
+    # Give back an array of all map ids {'maps': [0,1,...]}
     name_stat = [(fn, os.stat(os.path.join(MAPS_FOLDER, fn))) for fn in os.listdir(MAPS_FOLDER)]
     ints = [int(ns[0].split('.')[0]) for ns in sorted(name_stat, key=lambda ns: ns[1].st_ctime, reverse=True)]
 

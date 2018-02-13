@@ -6,6 +6,7 @@ TILE = 16
 
 
 def normalize_light(img):
+    # Simple histogram equalization
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
     clahe = cv2.createCLAHE(clipLimit=CLIP, tileGridSize=(TILE, TILE))

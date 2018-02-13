@@ -25,6 +25,7 @@ def edges_highlight_rect_ratio(img):
     edges = cv2.Canny(gray, 30, CANNY)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (MORPH, MORPH))
     closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+    # Contours from the edges
     _, contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
@@ -38,7 +39,7 @@ def edges_highlight_rect_ratio(img):
         approx = cv2.approxPolyDP(cont, 0.1 * arc_len, True)
         cv2.drawContours(highlight, [approx], -1, (255, 0, 0), 2)
 
-        if len(approx) == 4:
+        if len(approx) == 4:  # Make sure it's a quadrangle
             pts_src = np.array(approx, np.float32)
 
             if np.argmin(np.sum(pts_src.squeeze(), axis=1)) != 0:
@@ -53,6 +54,7 @@ def edges_highlight_rect_ratio(img):
 
 
 def rectangle_preview(img):
+    # Misc little debugging function to display results of rectangle selection
     edges, highlight, rect, _ = edges_highlight_rect_ratio(img)
 
     cv2.namedWindow('edges', cv2.WINDOW_AUTOSIZE)

@@ -5,6 +5,7 @@ HEIGHT = 256
 
 
 def generate_thumb(map_data):
+    # From a complete map, reconstruct a tiny drawing of it
     width = int(HEIGHT * map_data['ratio'])
     res = map_data['resolution']
 

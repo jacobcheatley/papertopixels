@@ -14,13 +14,12 @@ VAL = (50, 255)
 
 EDGE = 6
 
-ERODE = 3
-ERODE_KERNEL = cv2.getStructuringElement(cv2.MORPH_RECT, (ERODE, ERODE))
+MED_BLUR = 3
 DILATE = 5
 DILATE_KERNEL = cv2.getStructuringElement(cv2.MORPH_RECT, (DILATE, DILATE))
 
-edge_mask = np.zeros((image_config.RESOLUTION, image_config.RESOLUTION, 1), np.uint8)
-cv2.rectangle(edge_mask, (EDGE-1, EDGE-1), (image_config.RESOLUTION-1-EDGE, image_config.RESOLUTION-1-EDGE), 255, thickness=cv2.FILLED)
+EDGE_MASK = np.zeros((image_config.RESOLUTION, image_config.RESOLUTION, 1), np.uint8)
+cv2.rectangle(EDGE_MASK, (EDGE - 1, EDGE - 1), (image_config.RESOLUTION - 1 - EDGE, image_config.RESOLUTION - 1 - EDGE), 255, thickness=cv2.FILLED)
 
 
 def create_masks(template):
@@ -53,22 +52,15 @@ def split_colors(img):
     k = cv2.bitwise_and(k, combined)
 
     # Remove edge noise (from slightly off edge detection)
-    b = cv2.bitwise_and(b, edge_mask)
-    g = cv2.bitwise_and(g, edge_mask)
-    r = cv2.bitwise_and(r, edge_mask)
-    k = cv2.bitwise_and(k, edge_mask)
+    b = cv2.bitwise_and(b, EDGE_MASK)
+    g = cv2.bitwise_and(g, EDGE_MASK)
+    r = cv2.bitwise_and(r, EDGE_MASK)
+    k = cv2.bitwise_and(k, EDGE_MASK)
 
-    # # Do small erode and larger dilate
-    # def noise_and_close(channel):
-    #     return cv2.morphologyEx(cv2.morphologyEx(channel, cv2.MORPH_ERODE, ERODE_KERNEL), cv2.MORPH_DILATE, DILATE_KERNEL)
-    #
-    # b = noise_and_close(b)
-    # g = noise_and_close(g)
-    # r = noise_and_close(r)
-    # k = noise_and_close(k)
-    b = cv2.morphologyEx(cv2.medianBlur(b, 3), cv2.MORPH_DILATE, DILATE_KERNEL)
-    g = cv2.morphologyEx(cv2.medianBlur(g, 3), cv2.MORPH_DILATE, DILATE_KERNEL)
-    r = cv2.morphologyEx(cv2.medianBlur(r, 3), cv2.MORPH_DILATE, DILATE_KERNEL)
-    k = cv2.morphologyEx(cv2.medianBlur(k, 3), cv2.MORPH_DILATE, DILATE_KERNEL)
+    # Median blur followed by dilation to remove noise and rejoin small gaps
+    b = cv2.morphologyEx(cv2.medianBlur(b, MED_BLUR), cv2.MORPH_DILATE, DILATE_KERNEL)
+    g = cv2.morphologyEx(cv2.medianBlur(g, MED_BLUR), cv2.MORPH_DILATE, DILATE_KERNEL)
+    r = cv2.morphologyEx(cv2.medianBlur(r, MED_BLUR), cv2.MORPH_DILATE, DILATE_KERNEL)
+    k = cv2.morphologyEx(cv2.medianBlur(k, MED_BLUR), cv2.MORPH_DILATE, DILATE_KERNEL)
 
     return b, g, r, k
