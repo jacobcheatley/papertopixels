@@ -25,7 +25,11 @@ def upload_file():
 
         if file:
             map_id = api.process_image(file)
-            return redirect(url_for('view_map', map_id=map_id))
+            if map_id is not None:
+                return redirect(url_for('view_map', map_id=map_id))
+            else:
+                flash('Timed out')
+                return redirect(request.url)
     else:
         return render_template('upload.html')
 

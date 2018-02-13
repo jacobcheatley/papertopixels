@@ -7,6 +7,7 @@ import json
 import os
 import image_config
 import time
+import multiprocessing
 
 path = os.path.dirname(os.path.realpath(__file__))
 MAPS_FOLDER = os.path.join(path, 'maps')
@@ -24,98 +25,113 @@ def print_time(fmt, start_time):
 
 
 def process_image(file: werkzeug.datastructures.FileStorage):
-    print('Processing image')
+    def m_process_image(output: multiprocessing.Value):
+        if image_config.PRINT_TIMES:
+            print('Processing image')
 
-    # Set up new folder for intermediate images
-    map_id = get_next_free()  # TODO: support concurrency properly
-    if image_config.SAVE_IMAGE:
-        pre = f'image/out/{map_id}'
-        os.makedirs(f'{pre}/colors', exist_ok=True)
-        os.makedirs(f'{pre}/lines', exist_ok=True)
+        # Set up new folder for intermediate images
+        map_id = get_next_free()  # TODO: support concurrency properly
+        if image_config.SAVE_IMAGE:
+            pre = f'image/out/{map_id}-{time.time()}'
+            os.makedirs(f'{pre}/colors', exist_ok=True)
+            os.makedirs(f'{pre}/lines', exist_ok=True)
 
-    # Get image into memory to be worked with in CV
-    in_memory = BytesIO()
-    file.save(in_memory)
-    data = np.fromstring(in_memory.getvalue(), dtype=np.uint8)
-    img = cv2.imdecode(data, 1)
+        # Get image into memory to be worked with in CV
+        in_memory = BytesIO()
+        file.save(in_memory)
+        data = np.fromstring(in_memory.getvalue(), dtype=np.uint8)
+        img = cv2.imdecode(data, 1)
 
-    process_start = time.time()
-    start_time = process_start
+        process_start = time.time()
+        start_time = process_start
 
-    # Process the image in stages
-    # Scale image to max size
-    scaled = image.resize(img)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/scaled.png', scaled)
+        # Process the image in stages
+        # Scale image to max size
+        scaled = image.resize(img)
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/scaled.png', scaled)
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Resize {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Resize {}', process_start)
 
-    # Find paper rectangle
-    edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/edges.png', edges)  # *
-        cv2.imwrite(f'{pre}/highlight.png', highlight)  # *
-        cv2.imwrite(f'{pre}/rect.png', rect)
+        # Find paper rectangle
+        edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/edges.png', edges)  # *
+            cv2.imwrite(f'{pre}/highlight.png', highlight)  # *
+            cv2.imwrite(f'{pre}/rect.png', rect)
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Rectangle {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Rectangle {}', process_start)
 
-    # Lighting correction
-    light = image.normalize_light(rect)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/light.png', light)
+        # Lighting correction
+        light = image.normalize_light(rect)
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/light.png', light)
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Lighting {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Lighting {}', process_start)
 
-    # Color thresholding
-    b, g, r, k = image.split_colors(light)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/colors/b.png', b)
-        cv2.imwrite(f'{pre}/colors/g.png', g)
-        cv2.imwrite(f'{pre}/colors/r.png', r)
-        cv2.imwrite(f'{pre}/colors/k.png', k)
+        # Color thresholding
+        b, g, r, k = image.split_colors(light)
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/colors/b.png', b)
+            cv2.imwrite(f'{pre}/colors/g.png', g)
+            cv2.imwrite(f'{pre}/colors/r.png', r)
+            cv2.imwrite(f'{pre}/colors/k.png', k)
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Color {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Color {}', process_start)
 
-    # Thinning
-    b_thin = image.thin_lines(b)
-    g_thin = image.thin_lines(g)
-    r_thin = image.thin_lines(r)
-    k_thin = image.thin_lines(k)
-    if image_config.SAVE_IMAGE:
-        cv2.imwrite(f'{pre}/lines/b.png', b_thin)
-        cv2.imwrite(f'{pre}/lines/g.png', g_thin)
-        cv2.imwrite(f'{pre}/lines/r.png', r_thin)
-        cv2.imwrite(f'{pre}/lines/k.png', k_thin)
+        # Thinning
+        b_thin = image.thin_lines(b)
+        g_thin = image.thin_lines(g)
+        r_thin = image.thin_lines(r)
+        k_thin = image.thin_lines(k)
+        if image_config.SAVE_IMAGE:
+            cv2.imwrite(f'{pre}/lines/b.png', b_thin)
+            cv2.imwrite(f'{pre}/lines/g.png', g_thin)
+            cv2.imwrite(f'{pre}/lines/r.png', r_thin)
+            cv2.imwrite(f'{pre}/lines/k.png', k_thin)
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Thinning {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Thinning {}', process_start)
 
-    lines = list(image.get_all_lines(
-        (b_thin, 'b'),
-        (g_thin, 'g'),
-        (r_thin, 'r'),
-        (k_thin, 'k'),
-    ))
+        lines = list(image.get_all_lines(
+            (b_thin, 'b'),
+            (g_thin, 'g'),
+            (r_thin, 'r'),
+            (k_thin, 'k'),
+        ))
 
-    if image_config.PRINT_TIMES:
-        process_start = print_time('Lines {}', process_start)
+        if image_config.PRINT_TIMES:
+            process_start = print_time('Lines {}', process_start)
 
-    map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
+        map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
 
-    thumb = image.generate_thumb(map_data)
-    cv2.imwrite(f'{THUMB_FOLDER}/{map_id}.png', thumb)
+        thumb = image.generate_thumb(map_data)
+        cv2.imwrite(f'{THUMB_FOLDER}/{map_id}.png', thumb)
 
-    _json_save(map_data)
+        _json_save(map_data)
 
-    if image_config.PRINT_TIMES:
-        print_time('Saved {}', process_start)
-        print_time('Total {}', start_time)
+        if image_config.PRINT_TIMES:
+            print_time('Saved {}', process_start)
+            print_time('Total {}', start_time)
 
-    return map_id
+        output.value = map_id
+        return
+
+    # Timeout logic
+    map_id = multiprocessing.Value('i')
+    p = multiprocessing.Process(target=m_process_image, name="Process", args=(map_id,))
+    p.start()
+    p.join(image_config.TIMEOUT)
+
+    if p.is_alive():  # Hasn't terminated, likely stuck
+        p.terminate()
+        return None
+    else:
+        return map_id.value
 
 
 def get_next_free():
