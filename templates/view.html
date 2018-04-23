@@ -4,17 +4,6 @@
     <meta charset="UTF-8">
     <title>Paper to Pixels Viewer</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}" />
-    <style>
-        #container {
-            width: 96%;
-            margin: 0;
-            padding-left: 2%;
-            padding-right: 2%;
-        }
-        canvas {
-            margin: auto;
-        }
-    </style>
     <script src="{{ url_for('static', filename='jquery.js') }}"></script>
     <script type="text/javascript">
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
@@ -39,7 +28,7 @@ $(function() {
 
     // Variables
     function showMessage(message) {
-        message_element.css('color', 'black');
+        message_element.css('color', 'white');
         message_element.text(message);
     }
 
@@ -108,11 +97,13 @@ $(function() {
 </head>
 <body>
     <h1>Map Preview</h1>
-    <a href="{{ url_for("upload_file") }}">Back to upload</a>
+    <div class="viewinput center">
+        <input type="tel" size="2" name="map" min="0" value="{{ map_id }}">
+        <button id="view">View</button>
+        <a href="{{ url_for("upload_file") }}"><button id="back">Back</button></a>
+    </div>
     <br>
-    <input type="number" size="2" name="map" min="0" value="{{ map_id }}">
-    <button id=view>View</button>
-    <span id="message">Enter a map ID to preview</span>
+    <h1 id="message">Enter a map ID to preview</h1>
     <br>
     <div id="container">
         <canvas id="canvas"></canvas>
