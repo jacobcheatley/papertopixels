@@ -15,21 +15,25 @@ thumb_folder = os.path.join(app.root_path, 'thumb')
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part.')
             return redirect(request.url)
         file = request.files['file']
 
         if file.filename == '':
-            flash('No selected file')
+            flash('No selected file.')
             return redirect(request.url)
 
         if file:
             map_id = api.process_image(file)
-            if map_id is not None:
-                return redirect(url_for('view_map', map_id=map_id))
-            else:
-                flash('Timed out')
+
+            if map_id is None and map_id != -1:
+                flash('Timed out.')
                 return redirect(request.url)
+            elif map_id == -1:
+                flash('Something strange happened. Wrong filetype?')
+                return redirect(request.url)
+            else:
+                return redirect(url_for('view_map', map_id=map_id))
     else:
         return render_template('upload.html')
 

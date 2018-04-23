@@ -24,8 +24,8 @@ def print_time(fmt, start_time):
     return time.time()
 
 
-def process_image(file: werkzeug.datastructures.FileStorage):
-    def m_process_image(output: multiprocessing.Value):
+def _process_image(file: werkzeug.datastructures.FileStorage, output: multiprocessing.Value):
+    try:
         if image_config.PRINT_TIMES:
             print('Processing image')
 
@@ -122,10 +122,16 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
         output.value = map_id
         return
+    except Exception as e:
+        print(e)
+        output.value = -1
+        return
 
+
+def process_image(file: werkzeug.datastructures.FileStorage):
     # Timeout logic
     map_id = multiprocessing.Value('i')
-    p = multiprocessing.Process(target=m_process_image, name="Process", args=(map_id,))
+    p = multiprocessing.Process(target=_process_image, name="Process", args=(file, map_id,))
     p.start()
     p.join(image_config.TIMEOUT)
 

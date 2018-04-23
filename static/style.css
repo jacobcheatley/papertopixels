@@ -1,0 +1,121 @@
+/* Reset CSS */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after, q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* End reset CSS */
+
+body {
+    font-family: "Lucinda Grande", "Lucinda Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    background-color: #333333;
+    color: white;
+    padding: 2vh;
+}
+
+h1 {
+    text-align: center;
+    font-weight: bold;
+    font-size: 6vh;
+    margin-bottom: 2vh;
+}
+
+.center {
+    /*display: inline-block;*/
+    /*margin: auto;*/
+    text-align: center;
+}
+
+.hidden {
+    opacity: 0;
+    display: none;
+}
+
+#file-select {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    display: block;
+    box-sizing: border-box;
+    z-index: -1;
+    height: 0.1px;
+    width: 0.1px;
+}
+
+.file-label {
+    font-size: 6vh;
+    font-weight: 700;
+    color: white;
+    background-color: #222;
+    display: inline-block;
+    cursor: pointer;
+    padding: 3vh;
+    margin-bottom: 2vh;
+    transition: background-color 0.3s ease-in-out;
+    border-radius: 3vh;
+}
+
+.file-label:hover, .file-label:focus, #file-form input[type=submit]:hover, #file-form input[type=submit]:focus {
+    background-color: #459959;
+}
+
+.file-label path {
+    fill: white;
+}
+
+#file-form {
+    margin-bottom: 2vh;
+}
+
+#file-form input[type=submit] {
+    background: #222;
+    font-size: 6vh;
+    font-weight: 700;
+    border: 0 none;
+    cursor: pointer;
+    padding: 3vh;
+    border-radius: 3vh;
+    color: white;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+.flashes li {
+    color: red;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
