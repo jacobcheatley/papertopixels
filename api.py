@@ -25,6 +25,8 @@ def print_time(fmt, start_time):
 
 
 def _process_image(file: werkzeug.datastructures.FileStorage, output: multiprocessing.Value):
+    # Resizing -> Rectangle extraction -> Lighting correction -> Foreground detection and masking
+    # -> Thinning -> Segmentation -> Segment colour detection -> Joining up same colour segments appropriately
     try:
         if image_config.PRINT_TIMES:
             print('Processing image')
@@ -34,8 +36,7 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
 
         if image_config.SAVE_IMAGE:
             pre = f'image/out/{map_id}-{time.time()}'
-            os.makedirs(f'{pre}/colors', exist_ok=True)
-            os.makedirs(f'{pre}/lines', exist_ok=True)
+            os.makedirs(f'{pre}', exist_ok=True)
 
         # Get image into memory to be worked with in CV
         in_memory = BytesIO()
@@ -74,37 +75,25 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         if image_config.PRINT_TIMES:
             process_start = print_time('Lighting {}', process_start)
 
-        # Color thresholding
-        b, g, r, k = image.split_colors(light)
+        # Foreground and background
+        mask = image.find_mask(light)
 
         if image_config.SAVE_IMAGE:
-            cv2.imwrite(f'{pre}/colors/b.png', b)
-            cv2.imwrite(f'{pre}/colors/g.png', g)
-            cv2.imwrite(f'{pre}/colors/r.png', r)
-            cv2.imwrite(f'{pre}/colors/k.png', k)
+            cv2.imwrite(f'{pre}/mask.png', mask)
         if image_config.PRINT_TIMES:
-            process_start = print_time('Color {}', process_start)
+            process_start = print_time('Mask {}', process_start)
 
         # Thinning
-        b_thin = image.thin_lines(b)
-        g_thin = image.thin_lines(g)
-        r_thin = image.thin_lines(r)
-        k_thin = image.thin_lines(k)
+        thinned = image.thin_lines(mask)
 
         if image_config.SAVE_IMAGE:
-            cv2.imwrite(f'{pre}/lines/b.png', b_thin)
-            cv2.imwrite(f'{pre}/lines/g.png', g_thin)
-            cv2.imwrite(f'{pre}/lines/r.png', r_thin)
-            cv2.imwrite(f'{pre}/lines/k.png', k_thin)
+            cv2.imwrite(f'{pre}/thinned.png', thinned)
         if image_config.PRINT_TIMES:
             process_start = print_time('Thinning {}', process_start)
 
-        lines = list(image.get_all_lines(
-            (b_thin, 'b'),
-            (g_thin, 'g'),
-            (r_thin, 'r'),
-            (k_thin, 'k'),
-        ))
+        # Lines
+        line_finder = image.LineFinder(light, thinned)
+        lines = list(line_finder.get_all_lines())
 
         if image_config.PRINT_TIMES:
             process_start = print_time('Lines {}', process_start)

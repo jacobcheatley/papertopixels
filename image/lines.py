@@ -8,148 +8,185 @@ EPSILON = 1
 NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
 DEBUG_PRINT = False
+# COLOR
+BLACK_V = 75
+EXTENT = 1
 
 
-def join_segments(segments, terminals):
-    """Figure out how all the segments should join, then return all simplified lines"""
-    if DEBUG_PRINT:
-        print('COMPONENT')
-        for index, seg in enumerate(segments):
-            print(f'-seg{index}', seg[0], seg[1], seg[-2], seg[-1], len(seg))
+def all_paths(v, graph):
+    """Generate the maximal cycle-free paths in graph starting at v.
+    graph must be a mapping from vertices to collections of
+    neighbouring vertices."""
+    path = [v]  # path traversed so far
+    seen = {v}  # set of vertices in path
 
-    # Tracking containers
-    terminals = list(terminals)
-    removed = set()  # for single loops and removed loops
-    graph = defaultdict(list)  # (index, term?): [(index, term?)]
-    chosen_cycles = []
+    def search():
+        dead_end = True
+        for neighbour in graph[path[-1]]:
+            if neighbour not in seen:
+                dead_end = False
+                seen.add(neighbour)
+                path.append(neighbour)
+                yield from search()
+                path.pop()
+                seen.remove(neighbour)
+        if dead_end and len(path) % 2 == 1:
+            yield list(path)
 
-    def all_paths(v):
-        """Generate the maximal cycle-free paths in graph starting at v.
-        graph must be a mapping from vertices to collections of
-        neighbouring vertices."""
-        path = [v]  # path traversed so far
-        seen = {v}  # set of vertices in path
+    yield from search()
 
-        def search():
-            dead_end = True
-            for neighbour in graph[path[-1]]:
-                if neighbour not in seen:
-                    dead_end = False
-                    seen.add(neighbour)
-                    path.append(neighbour)
-                    yield from search()
-                    path.pop()
-                    seen.remove(neighbour)
-            if dead_end and len(path) % 2 == 1:
-                yield list(path)
 
-        yield from search()
+class LineFinder:
+    def __init__(self, img, thinned):
+        self.img = img
+        self.hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        self.thinned = thinned
 
-    def path_len(path):
-        total = 0
-        for node, term in path:
-            if not term:
-                total += len(segments[node])
-            else:
-                total -= 1
-        return total
+    def _color(self, segment):
+        """Return b g r or k for the segment, by averaging color along it"""
+        pixels = np.array([self.hsv_img[y-EXTENT:y+EXTENT+1, x-EXTENT:x+EXTENT+1] for y, x in segment])
+        pixels = pixels.reshape(-1, pixels.shape[-1])
+        h, s, v = np.average(pixels, axis=0)
+        if v < BLACK_V:
+            return 'k'
 
-    # Generate the graph by looking for segment intersections
-    for si, seg in enumerate(segments):
-        if seg[0] == seg[-1]:
-            removed.add(si)
-            chosen_cycles.append([(si, False)])
-            continue
-        for ti, term in enumerate(terminals):
-            if seg[0] == term or seg[-1] == term:
-                graph[(ti, True)].append((si, False))
-                graph[(si, False)].append((ti, True))
-
-    # Get out the largest cycles
-    if DEBUG_PRINT:
-        print('GRAPH', graph)
-
-    cycles = sorted([c for c in simple_cycles(graph) if len(c) > 2], key=path_len)
-    while cycles:
-        # Grab largest, remove things that share segments
-        largest = cycles.pop()
-        chosen_cycles.append(largest)
-        rmv = [node for node in largest if not node[1]]  # Remove with matching segment
-        for seg in rmv:
-            # Doing removal
-            removed.add(seg[0])
-            del graph[seg]
-        for key in graph:
-            if key[1]:  # Only bother looking at terminals
-                neighs = graph[key]
-                graph[key] = [n for n in neighs if n not in rmv]
-        cycles = [c for c in cycles if not any(n in rmv for n in c)]
-
-    if DEBUG_PRINT:
-        print('CYCLES', chosen_cycles)
-        print('GRAPH', graph)
-        print('REMOVED', removed)
-
-    # Grab all possible paths
-    found_paths = []
-    for si in range(len(segments)):
-        if si in removed: continue
-        found_paths.extend(all_paths((si, False)))
-        found_paths.append([(si, False)])
-
-    found_paths.sort(key=path_len)
-
-    if DEBUG_PRINT:
-        print('PATHS', found_paths)
-        print('LENGTHS', [path_len(path) for path in found_paths])
-
-    # Get out the largest linear paths
-    chosen_paths = []
-    while found_paths:
-        # Grab largest, remove things that share segments
-        largest = found_paths.pop()
-        chosen_paths.append(largest)
-        rmv = [node for node in largest if not node[1]]  # Remove with matching segment
-        found_paths = [p for p in found_paths if not any(n in rmv for n in p)]
-
-    if DEBUG_PRINT:
-        print('FINAL CYCLES', chosen_cycles)
-        print('FINAL PATHS', chosen_paths)
-
-    final = []
-
-    def final_process(group, closed):
-        # Group is of format [(si, term)]
-        partial = []
-        if len(group) == 1:  # Self loop or isolated
-            partial = segments[group[0][0]]
+        if 30 <= h <= 89:
+            return 'g'
+        elif 90 <= h <= 149:
+            return 'b'
         else:
-            for i, (si, term) in enumerate(group):
-                if term: continue
-                segment = segments[si]
-                if i == len(group) - 1:  # If we're the last, we need to use previous
-                    prev_term = terminals[group[i - 1][0]]
-                    should_reverse = segment[0] != prev_term
+            return 'r'
+
+    def _join_segments(self, segments, terminals):
+        """Figure out how all the segments should join, then return all simplified lines"""
+        if DEBUG_PRINT:
+            print('COMPONENT')
+            for index, seg in enumerate(segments):
+                print(f'-seg{index}', seg[0], seg[1], seg[-2], seg[-1], len(seg))
+
+        # Tracking containers
+        result = []
+        terminals = list(terminals)
+        colored_segments = defaultdict(list)  # color: [segment]
+
+        # Tag each segment with a colour
+        for seg in segments:
+            colored_segments[self._color(seg)].append(seg)
+
+        # For each group of segments by colour, construct a graph
+        for color, segments in colored_segments.items():
+            result.extend(self._process_colored_segments(color, segments, terminals))
+
+        # Output format must be [([points], closed, color)]
+        return result
+
+    @staticmethod
+    def _process_colored_segments(color, segments, terminals):
+        result = []  # [([points], closed, color)]
+        graph = defaultdict(list)  # (index, term?): [(index, term?)]
+        removed = set()  # for single loops and removed loops
+        chosen_cycles = []
+
+        # Generate the graph by looking for segment intersections
+        for si, seg in enumerate(segments):
+            if seg[0] == seg[-1]:
+                removed.add(si)
+                chosen_cycles.append([(si, False)])
+                continue
+            for ti, term in enumerate(terminals):
+                if seg[0] == term or seg[-1] == term:
+                    graph[(ti, True)].append((si, False))
+                    graph[(si, False)].append((ti, True))
+
+        # Get out the largest cycles
+        if DEBUG_PRINT:
+            print('GRAPH', graph)
+
+        def path_len(path):
+            total = 0
+            for node, term in path:
+                if not term:
+                    total += len(segments[node])
                 else:
-                    next_term = terminals[group[i + 1][0]]
-                    should_reverse = segment[-1] != next_term
-                partial += reversed(segment) if should_reverse else segment
+                    total -= 1
+            return total
 
-        # Be sure to approximate the path - not every pixel really matters
-        final.append((cv2.approxPolyDP(np.asarray(partial), EPSILON, closed).squeeze(), closed))
+        cycles = sorted([c for c in simple_cycles(graph) if len(c) > 2], key=path_len)
+        while cycles:
+            # Grab largest, remove things that share segments
+            largest = cycles.pop()
+            chosen_cycles.append(largest)
+            rmv = [node for node in largest if not node[1]]  # Remove with matching segment
+            for seg in rmv:
+                # Doing removal
+                removed.add(seg[0])
+                del graph[seg]
+            for key in graph:
+                if key[1]:  # Only bother looking at terminals
+                    neighs = graph[key]
+                    graph[key] = [n for n in neighs if n not in rmv]
+            cycles = [c for c in cycles if not any(n in rmv for n in c)]
 
-    for cycle in chosen_cycles:
-        final_process(cycle, True)
-    for path in chosen_paths:
-        final_process(path, False)
+        if DEBUG_PRINT:
+            print('CYCLES', chosen_cycles)
+            print('GRAPH', graph)
+            print('REMOVED', removed)
 
-    # Output format must be [([points], closed)]
-    return final
+        # Grab all possible paths
+        found_paths = []
+        for si in range(len(segments)):
+            if si in removed: continue
+            found_paths.extend(all_paths((si, False), graph))
+            found_paths.append([(si, False)])
 
+        found_paths.sort(key=path_len)
 
-def get_all_lines(*img_and_labels):
-    """From each color channel, yield out all the labelled lines"""
-    for img, label in img_and_labels:
+        if DEBUG_PRINT:
+            print('PATHS', found_paths)
+            print('LENGTHS', [path_len(path) for path in found_paths])
+
+        # Get out the largest linear paths
+        chosen_paths = []
+        while found_paths:
+            # Grab largest, remove things that share segments
+            largest = found_paths.pop()
+            chosen_paths.append(largest)
+            rmv = [node for node in largest if not node[1]]  # Remove with matching segment
+            found_paths = [p for p in found_paths if not any(n in rmv for n in p)]
+
+        if DEBUG_PRINT:
+            print('FINAL CYCLES', chosen_cycles)
+            print('FINAL PATHS', chosen_paths)
+
+        def final_process(group, closed):
+            # Group is of format [(si, term)]
+            partial = []
+            if len(group) == 1:  # Self loop or isolated
+                partial = segments[group[0][0]]
+            else:
+                for i, (si, term) in enumerate(group):
+                    if term: continue
+                    segment = segments[si]
+                    if i == len(group) - 1:  # If we're the last, we need to use previous
+                        prev_term = terminals[group[i - 1][0]]
+                        should_reverse = segment[0] != prev_term
+                    else:
+                        next_term = terminals[group[i + 1][0]]
+                        should_reverse = segment[-1] != next_term
+                    partial += reversed(segment) if should_reverse else segment
+
+            # Be sure to approximate the path - not every pixel really matters
+            result.append((cv2.approxPolyDP(np.asarray(partial), EPSILON, closed).squeeze(), closed, color))
+
+        for cycle in chosen_cycles:
+            final_process(cycle, True)
+        for path in chosen_paths:
+            final_process(path, False)
+
+        return result
+
+    def get_all_lines(self):
+        """Yield out all the labelled lines, ready to be put into JSON"""
         visited = set()
 
         def exhaust(y_s, x_s):
@@ -166,7 +203,7 @@ def get_all_lines(*img_and_labels):
                 # Check neighbour directions
                 for d in NEIGH:
                     n_y, n_x = pix[0] + d[0], pix[1] + d[1]
-                    if img[n_y, n_x]:
+                    if self.thinned[n_y, n_x]:
                         if (n_y, n_x) not in visited:
                             unvisit.append((n_y, n_x))
                         elif (n_y, n_x) in terminals:
@@ -178,7 +215,7 @@ def get_all_lines(*img_and_labels):
                 result = 0
                 for d in NEIGH:
                     n_y, n_x = pix[0] + d[0], pix[1] + d[1]
-                    if img[n_y, n_x]:
+                    if self.thinned[n_y, n_x]:
                         result += 1
                 return result
 
@@ -250,25 +287,19 @@ def get_all_lines(*img_and_labels):
             return (segments, terminals) if comp_pixels[0] > MIN_COMP else (None, None)
 
         # Search for search start locations
-        for y in range(img.shape[0]):
-            # TODO: Faster iteration tests
-            for x in range(img.shape[1]):
+        for y in range(self.thinned.shape[0]):
+            for x in range(self.thinned.shape[1]):
                 if (y, x) in visited:
                     continue
-                elif img[y, x]:
+                elif self.thinned[y, x]:
                     segments, terminals = exhaust(y, x)
                     # Segments is none if the total shape is too small
                     if segments is not None:
-                        lines = join_segments(segments, terminals)
-                        for points, closed in lines:
+                        # Yield out all the data from the lines
+                        lines = self._join_segments(segments, terminals)
+                        for points, closed, color in lines:
                             yield {
-                                'color': label,
+                                'color': color,
                                 'closed': closed,
                                 'points': [{'x': int(x), 'y': int(y)} for y, x in points]
-                            }
-
-
-if __name__ == '__main__':
-    test = cv2.imread('out/29/lines/r.png', cv2.IMREAD_GRAYSCALE)
-    for line in get_all_lines((test, 'test')):
-        print(line)
+                                }
