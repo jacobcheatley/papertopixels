@@ -1,5 +1,5 @@
 from .scaling import *
-from .rectangle import *
+from .rectangle import best_rectangle
 from .lighting import *
 from .thinning import *
 from .lines import LineFinder

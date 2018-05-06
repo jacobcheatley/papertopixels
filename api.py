@@ -58,11 +58,9 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
             process_start = print_time('Resize {}', process_start)
 
         # Find paper rectangle
-        edges, highlight, rect, ratio = image.edges_highlight_rect_ratio(scaled)
+        rect = image.best_rectangle(scaled)
 
         if image_config.SAVE_IMAGE:
-            cv2.imwrite(f'{pre}/edges.png', edges)
-            cv2.imwrite(f'{pre}/highlight.png', highlight)
             cv2.imwrite(f'{pre}/rect.png', rect)
         if image_config.PRINT_TIMES:
             process_start = print_time('Rectangle {}', process_start)
@@ -98,7 +96,7 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         if image_config.PRINT_TIMES:
             process_start = print_time('Lines {}', process_start)
 
-        map_data = {'id': map_id, 'ratio': ratio, 'resolution': image_config.RESOLUTION, 'lines': lines}
+        map_data = {'id': map_id, 'ratio': 1.4142, 'resolution': image_config.RESOLUTION, 'lines': lines}
 
         thumb = image.generate_thumb(map_data)
         cv2.imwrite(f'{THUMB_FOLDER}/{map_id}.png', thumb)

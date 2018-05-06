@@ -1,7 +1,7 @@
 import cv2
 
 # CONSTANTS
-MAX_DIMENSION = 1024
+MAX_DIMENSION = 1024 * 2
 # This might want to be larger? Scaling might not even be needed
 
 
