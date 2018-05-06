@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 # CONSTANTS
 CLIP = 3.0
@@ -21,9 +22,12 @@ def normalize_light(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     v = hsv[:, :, 2]
     lpf = cv2.GaussianBlur(v, KERNEL, 0)
-    mean = cv2.blur(lpf, KERNEL)
+    mean = np.ones(v.shape) * np.mean(lpf).astype(int)
     newv = v - lpf + mean
     hsv[:, :, 2] = newv
+    # TEST
+    print('ALL MEAN', np.mean(newv))
+    # TEST
     return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)#, v, lpf, newv
 #
 #

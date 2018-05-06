@@ -9,7 +9,7 @@ NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
 DEBUG_PRINT = False
 # COLOR
-BLACK_V = 75
+BLACK_V = 100
 EXTENT = 1
 
 
@@ -45,14 +45,24 @@ class LineFinder:
     def _color(self, segment):
         """Return b g r or k for the segment, by averaging color along it"""
         pixels = np.array([self.hsv_img[y-EXTENT:y+EXTENT+1, x-EXTENT:x+EXTENT+1] for y, x in segment])
-        pixels = pixels.reshape(-1, pixels.shape[-1])
-        h, s, v = np.average(pixels, axis=0)
-        if v < BLACK_V:
+        pixels = pixels.reshape(-1, pixels.shape[-1])  # Remove unneeded extra dimensions
+        h = [p[0] for p in pixels]
+        v = [p[2] for p in pixels]
+
+        v_avg = np.average(v)
+        if v_avg < BLACK_V:
             return 'k'
 
-        if 30 <= h <= 89:
+        # Normalize red values by shifting to upper section
+        for i in range(len(h)):
+            if h[i] < 30:
+                h[i] = 179 - h[i]
+
+        h_avg = np.average(h)
+
+        if 30 <= h_avg <= 89:
             return 'g'
-        elif 90 <= h <= 149:
+        elif 90 <= h_avg <= 149:
             return 'b'
         else:
             return 'r'
