@@ -2,12 +2,24 @@ import cv2
 import numpy as np
 import image_config
 
+DRAW = True
+
 # DETECTION CONSTANTS
-MORPH = 3
+MORPH = 7
 KERNEL = cv2.getStructuringElement(cv2.MORPH_RECT, (MORPH, MORPH))
-SETS = [(10, 170, 30), (30, 170, 30), (30, 200, 70), (30, 230, 5), (30, 230, 120)]
+SETS = [(10, 170, 5),
+        (10, 170, 30),
+        (10, 170, 120),
+        (10, 120, 70),
+        (30, 170, 30),
+        (30, 200, 70),
+        (30, 230, 5),
+        (30, 230, 120),
+        (60, 200, 10),
+        (70, 230, 30),
+        ]
 # Sets are MIN, MAX, SIGMA
-D = 4
+D = 6
 
 # WARPING
 WIDTH = float(image_config.RESOLUTION)
@@ -32,8 +44,6 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120):
     _, contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-    highlight = gray.copy()
-
     rect = None
     area = 0
 
@@ -41,10 +51,16 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120):
     for cont in contours:
         arc_len = cv2.arcLength(cont, True)
         approx = cv2.approxPolyDP(cont, 0.1 * arc_len, True)
-        cv2.drawContours(highlight, [approx], -1, (255, 0, 0), 2)
 
         if len(approx) == 4:  # Make sure it's a quadrangle
             pts_src = np.array(approx, np.float32)
+
+            if DRAW:
+                pre = '/home/jcheatley/PycharmProjects/papertopixels/image/out/highlights'
+                highlight = img.copy()
+                cv2.drawContours(highlight, [approx], -1, (255, 0, 0), 5)
+                cv2.imwrite(f'{pre}/high{MIN}-{MAX}-{SIG_C}.png', highlight)
+                cv2.imwrite(f'{pre}/edge{MIN}-{MAX}-{SIG_C}.png', edges)
 
             if np.argmin(np.sum(pts_src.squeeze(), axis=1)) != 0:
                 # If first point is not top left, must be top right
@@ -59,10 +75,12 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120):
 
 
 def best_rectangle(img):
+    from .lighting import normalize_light  # Maybe normalize light?
+    test = normalize_light(img)
     potentials = []
 
     for MIN, MAX, SIG in SETS:
-        rect, area = try_find(img, MIN=MIN, MAX=MAX, SIG_C=SIG, SIG_S=SIG)
+        rect, area = try_find(test, MIN=MIN, MAX=MAX, SIG_C=SIG, SIG_S=SIG)
         if rect is not None:
             potentials.append((rect, (area, MIN, MAX, SIG)))
 
