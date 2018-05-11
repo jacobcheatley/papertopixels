@@ -25,9 +25,6 @@ def normalize_light(img):
     mean = np.ones(v.shape) * np.mean(lpf).astype(int)
     newv = v - lpf + mean
     hsv[:, :, 2] = newv
-    # TEST
-    print('ALL MEAN', np.mean(newv))
-    # TEST
     return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)#, v, lpf, newv
 #
 #

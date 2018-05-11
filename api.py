@@ -35,8 +35,8 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         map_id = get_next_free()
 
         if image_config.SAVE_IMAGE:
-            pre = f'image/out/{map_id}-{time.time()}'
-            os.makedirs(f'{pre}', exist_ok=True)
+            pre = f'{path}/image/out/{map_id}-{time.time()}'
+            os.makedirs(pre, exist_ok=True)
 
         # Get image into memory to be worked with in CV
         in_memory = BytesIO()

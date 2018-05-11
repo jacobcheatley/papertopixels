@@ -33,12 +33,6 @@ def find_mask(img):
     res = res.reshape((w, h, 1))
     res[edge_mask[..., 0] == 0] = BLACK
 
-    # TEST
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    v = hsv[:, :, 2].reshape(1024*1024, 1)
-    print('FG MEAN', np.mean(v[label == fg_index]))
-    # TEST
-
     # Do a morphological close to fix up rough patches
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
 

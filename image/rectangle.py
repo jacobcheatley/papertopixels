@@ -75,12 +75,10 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120):
 
 
 def best_rectangle(img):
-    from .lighting import normalize_light  # Maybe normalize light?
-    test = normalize_light(img)
     potentials = []
 
     for MIN, MAX, SIG in SETS:
-        rect, area = try_find(test, MIN=MIN, MAX=MAX, SIG_C=SIG, SIG_S=SIG)
+        rect, area = try_find(img, MIN=MIN, MAX=MAX, SIG_C=SIG, SIG_S=SIG)
         if rect is not None:
             potentials.append((rect, (area, MIN, MAX, SIG)))
 

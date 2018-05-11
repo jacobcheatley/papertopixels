@@ -9,7 +9,8 @@ NEIGH = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 MIN_COMP = 10
 DEBUG_PRINT = False
 # COLOR
-BLACK_V = 80
+BLACK_ABS_V = 65
+BLACK_V_RATIOS = [(110, 1.3), (90, 1.5)]  # TODO: This will need some tuning
 EXTENT = 1
 
 
@@ -47,12 +48,13 @@ class LineFinder:
         # TODO: This will have to be adapative somehow as blacks get miscategorised
         pixels = np.array([self.hsv_img[y-EXTENT:y+EXTENT+1, x-EXTENT:x+EXTENT+1] for y, x in segment])
         pixels = pixels.reshape(-1, pixels.shape[-1])  # Remove unneeded extra dimensions
-        h = [p[0] for p in pixels]
         v = [p[2] for p in pixels]
 
         v_avg = np.average(v)
-        if v_avg < BLACK_V:
+        if v_avg < BLACK_ABS_V:
             return 'k'
+
+        h = [p[0] for p in pixels]
 
         # Normalize red values by shifting to upper section
         for i in range(len(h)):
@@ -60,6 +62,20 @@ class LineFinder:
                 h[i] = 179 - h[i]
 
         h_avg = np.average(h)
+
+        if v_avg < BLACK_V_RATIOS[0][0]:
+            s = [p[1] for p in pixels]
+            s_avg = np.average(s)
+            hsv_pixel = np.uint8([[[h_avg, s_avg, v_avg]]])
+            b, g, r = cv2.cvtColor(hsv_pixel, cv2.COLOR_HSV2BGR)[0, 0]
+            ratio = max(r, g, b) / min(r, g, b)
+
+            for potential_v, potential_ratio in BLACK_V_RATIOS:
+                if v_avg < potential_v and ratio < potential_ratio:
+                    print(hsv_pixel[0, 0])
+                    print(r, g, b)
+                    print(ratio)
+                    return 'k'
 
         if 30 <= h_avg <= 89:
             return 'g'
