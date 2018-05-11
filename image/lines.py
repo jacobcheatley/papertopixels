@@ -77,9 +77,9 @@ class LineFinder:
                     # print(ratio)
                     return 'k'
 
-        if 30 <= h_avg <= 89:
+        if 30 <= h_avg < 90:
             return 'g'
-        elif 90 <= h_avg <= 149:
+        elif 90 <= h_avg < 150:
             return 'b'
         else:
             return 'r'
