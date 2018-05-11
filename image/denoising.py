@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def nabla(I):
     h, w = I.shape
     G = np.zeros((h, w, 2), I.dtype)
@@ -66,16 +67,14 @@ def solve_TVL1(img, clambda, iter_n=101):
 def denoise(img):
     lambda_TVL1 = 1.0
     img = img / 255.0
-    b, g, r = cv2.split(img)
-    b = solve_TVL1(b, lambda_TVL1, iter_n=30)
-    g = solve_TVL1(g, lambda_TVL1, iter_n=30)
-    r = solve_TVL1(r, lambda_TVL1, iter_n=30)
-    img = (255 * cv2.merge((b, g, r))).astype(np.uint8)
+    img = solve_TVL1(img, lambda_TVL1, iter_n=30)
+    img = (255 * img).astype(np.uint8)
     return img
 
 
 if __name__ == '__main__':
     import time
+
     img = cv2.imread('/home/jcheatley/PycharmProjects/papertopixels/image/out/85-1525915984.5482326/scaled.png')
     start = time.time()
     img = denoise(img)

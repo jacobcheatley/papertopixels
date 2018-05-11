@@ -49,13 +49,13 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         start_time = process_start
 
         # Process the image in stages
-        # Scale image to max size
-        scaled = image.resize(img)
-
-        if image_config.SAVE_IMAGE:
-            cv2.imwrite(f'{pre}/scaled.png', scaled)
-        if image_config.PRINT_TIMES:
-            process_start = print_time('Resize {}', process_start)
+        # # Scale image to max size
+        # scaled = image.resize(img)
+        #
+        # if image_config.SAVE_IMAGE:
+        #     cv2.imwrite(f'{pre}/scaled.png', scaled)
+        # if image_config.PRINT_TIMES:
+        #     process_start = print_time('Resize {}', process_start)
 
         # # Denoise to remove some minor problems
         # denoised = image.denoise(scaled)
@@ -66,7 +66,7 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         #     process_start = print_time('Denoising {}', process_start)
 
         # Find paper rectangle
-        rect = image.best_rectangle(scaled)
+        rect = image.best_rectangle(img)
 
         if image_config.SAVE_IMAGE:
             cv2.imwrite(f'{pre}/rect.png', rect)

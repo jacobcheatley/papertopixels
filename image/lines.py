@@ -72,9 +72,9 @@ class LineFinder:
 
             for potential_v, potential_ratio in BLACK_V_RATIOS:
                 if v_avg < potential_v and ratio < potential_ratio:
-                    print(hsv_pixel[0, 0])
-                    print(r, g, b)
-                    print(ratio)
+                    # print(hsv_pixel[0, 0])
+                    # print(r, g, b)
+                    # print(ratio)
                     return 'k'
 
         if 30 <= h_avg <= 89:
