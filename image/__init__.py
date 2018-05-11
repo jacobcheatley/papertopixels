@@ -1,4 +1,5 @@
 from .scaling import *
+from .denoising import denoise
 from .rectangle import best_rectangle
 from .lighting import *
 from .thinning import *

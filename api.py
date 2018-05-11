@@ -57,6 +57,14 @@ def _process_image(file: werkzeug.datastructures.FileStorage, output: multiproce
         if image_config.PRINT_TIMES:
             process_start = print_time('Resize {}', process_start)
 
+        # # Denoise to remove some minor problems
+        # denoised = image.denoise(scaled)
+        #
+        # if image_config.SAVE_IMAGE:
+        #     cv2.imwrite(f'{pre}/denoised.png', denoised)
+        # if image_config.PRINT_TIMES:
+        #     process_start = print_time('Denoising {}', process_start)
+
         # Find paper rectangle
         rect = image.best_rectangle(scaled)
 
