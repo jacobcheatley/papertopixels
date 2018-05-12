@@ -34,7 +34,7 @@ def find_mask(img):
     res[edge_mask[..., 0] == 0] = BLACK
 
     # Do a morphological close to fix up rough patches
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
+    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7)))
 
     return res
 
