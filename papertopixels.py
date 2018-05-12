@@ -38,11 +38,6 @@ def upload_file():
         return render_template('upload.html')
 
 
-@app.route('/camera', methods=['GET'])
-def camera_preview():
-    return render_template('camera.html')
-
-
 # TODO: remove and use apache file serving later
 @app.route('/map/<int:map_id>', methods=['GET'])
 def get_map(map_id: int):
