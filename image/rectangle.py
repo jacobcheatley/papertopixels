@@ -43,6 +43,13 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120, gray=None):
     _, contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
+    if image_config.DETAIL_SAVE_IMAGES:
+        cv2.imwrite(f'image/detail/edge-{MIN}-{MAX}.png', edges)
+        cv2.imwrite(f'image/detail/closed-{MIN}-{MAX}.png', closed)
+        cont_img = img.copy()
+        cv2.drawContours(cont_img, np.int32(np.float32(contours) * target_scale), -1, (255, 0, 0), 5)
+        cv2.imwrite(f'image/detail/contour-{MIN}-{MAX}.png', cont_img)
+
     rect = None
     area = 0
 
@@ -57,6 +64,11 @@ def try_find(img, MIN=30, MAX=250, SIG_C=10, SIG_S=120, gray=None):
             if np.argmin(np.sum(pts_src.squeeze(), axis=1)) != 0:
                 # If first point is not top left, must be top right
                 pts_src = np.roll(pts_src, 3, axis=0)
+
+            if image_config.DETAIL_SAVE_IMAGES:
+                highlight = img.copy()
+                cv2.drawContours(highlight, [np.int32(approx * target_scale)], -1, (0, 255, 0), 10)
+                cv2.imwrite(f'image/detail/highlight-{MIN}-{MAX}.png', highlight)
 
             h, status = cv2.findHomography(pts_src * target_scale, pts_dst)
             rect = cv2.warpPerspective(img, h, (int(WIDTH + MARGIN * 2), int(HEIGHT + MARGIN * 2)))

@@ -189,6 +189,7 @@ venv.bak/
 # Custom Additions
 image/data
 image/out
+image/detail
 maps
 misc
 thumb/

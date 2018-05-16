@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import image_config
 
 
 def nabla(I):
@@ -69,6 +70,8 @@ def denoise(img):
     img = img / 255.0
     img = solve_TVL1(img, lambda_TVL1, iter_n=30)
     img = (255 * img).astype(np.uint8)
+    if image_config.DETAIL_SAVE_IMAGES:
+        cv2.imwrite('image/detail/denoise.png', img)
     return img
 
 
