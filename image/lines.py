@@ -10,7 +10,8 @@ MIN_COMP = 10
 DEBUG_PRINT = False
 # COLOR
 BLACK_ABS_V = 65
-BLACK_V_RATIOS = [(110, 1.3), (90, 1.5)]  # TODO: This will need some tuning
+BLACK_TEST_V = 120
+BLACK_TEST_S = 30
 EXTENT = 1
 
 
@@ -62,6 +63,12 @@ class LineFinder:
         if v_avg < BLACK_ABS_V:
             return 'k'
 
+        if v_avg < BLACK_TEST_V:
+            s = [p[1] for p in pixels]
+            s_avg = np.average(s)
+            if s_avg < BLACK_TEST_S:
+                return 'k'
+
         h = [p[0] for p in pixels]
 
         # Normalize red values by shifting to upper section
@@ -70,20 +77,6 @@ class LineFinder:
                 h[i] = 179 - h[i]
 
         h_avg = np.average(h)
-
-        if v_avg < BLACK_V_RATIOS[0][0]:
-            s = [p[1] for p in pixels]
-            s_avg = np.average(s)
-            hsv_pixel = np.uint8([[[h_avg, s_avg, v_avg]]])
-            b, g, r = cv2.cvtColor(hsv_pixel, cv2.COLOR_HSV2BGR)[0, 0]
-            ratio = max(r, g, b) / min(r, g, b)
-
-            for potential_v, potential_ratio in BLACK_V_RATIOS:
-                if v_avg < potential_v and ratio < potential_ratio:
-                    # print(hsv_pixel[0, 0])
-                    # print(r, g, b)
-                    # print(ratio)
-                    return 'k'
 
         if 30 <= h_avg < 90:
             return 'g'
