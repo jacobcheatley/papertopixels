@@ -11,8 +11,7 @@ DEBUG_PRINT = False
 # COLOR
 BLACK_ABS_V = 65
 BLACK_TEST_V = 120
-BLACK_TEST_S = 30
-EXTENT = 1
+BLACK_TEST_S = 50
 
 
 def all_paths(v, graph):
@@ -47,7 +46,7 @@ class LineFinder:
     def _color(self, segment):
         """Return b g r or k for the segment, by averaging color along it"""
         # TODO: This will have to be adapative somehow as blacks get miscategorised
-        pixels = np.array([self.hsv_img[y-EXTENT:y+EXTENT+1, x-EXTENT:x+EXTENT+1] for y, x in segment])
+        pixels = np.array([self.hsv_img[y, x] for y, x in segment])
         pixels = pixels.reshape(-1, pixels.shape[-1])  # Remove unneeded extra dimensions
         v = [p[2] for p in pixels]
 
