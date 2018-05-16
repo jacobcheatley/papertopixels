@@ -42,14 +42,6 @@ class LineFinder:
     def __init__(self, img, thinned):
         self.img = img
         self.hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        # Process HSV image to blacken already blackish pixels -> VERY slow, need a better way
-        # for y in range(self.hsv_img.shape[0]):
-        #     for x in range(self.hsv_img.shape[1]):
-        #         v = self.hsv_img[y, x, 2]
-        #         if v < BLACK_ABS_V:
-        #             self.hsv_img[y, x, 2] = 0
-        #         else:
-        #             self.hsv_img[y, x, 2] += 10
         self.thinned = thinned
 
     def _color(self, segment):
