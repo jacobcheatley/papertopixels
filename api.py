@@ -12,6 +12,7 @@ import multiprocessing
 path = os.path.dirname(os.path.realpath(__file__))
 MAPS_FOLDER = os.path.join(path, 'maps')
 THUMB_FOLDER = os.path.join(path, 'thumb')
+NEXT_ID = None
 
 
 def _json_save(dct: dict):
@@ -138,13 +139,22 @@ def process_image(file: werkzeug.datastructures.FileStorage):
 
 
 def get_next_free():
-    # TODO: Concurrency support
-    return len(os.listdir(MAPS_FOLDER))
+    global NEXT_ID
+
+    if NEXT_ID is None:
+        maps = get_all_maps()
+        if maps:
+            NEXT_ID = maps[0]
+        else:
+            NEXT_ID = 0
+    NEXT_ID += 1
+
+    return NEXT_ID
 
 
 def get_all_maps():
     # Give back an array of all map ids {'maps': [0,1,...]}
-    name_stat = [(fn, os.stat(os.path.join(MAPS_FOLDER, fn))) for fn in os.listdir(MAPS_FOLDER)]
-    ints = [int(ns[0].split('.')[0]) for ns in sorted(name_stat, key=lambda ns: ns[1].st_ctime, reverse=True)]
+    names = [fn for fn in os.listdir(MAPS_FOLDER) if os.path.isfile(os.path.join(MAPS_FOLDER, fn))]
+    ints = sorted([int(fn.split('.')[0]) for fn in names if fn.split('.')[0].isdigit()], reverse=True)
 
-    return json.dumps({'maps': ints})
+    return ints

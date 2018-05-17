@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, render_template, url_for, flash, sen
 import api
 import app_config
 import os
+import json
 
 app = Flask(__name__)
 app.config.from_object(app_config.Config)
@@ -51,10 +52,10 @@ def get_thumbnail(map_id: int):
 
 @app.route('/maps', methods=['GET'])
 def get_map_list():
-    return api.get_all_maps()
+    return json.dumps({'maps': api.get_all_maps()})
 
 
-@app.route('/view', methods=['GET'], defaults={'map_id': 0})
+@app.route('/view', methods=['GET'], defaults={'map_id': 1})
 @app.route('/view/<int:map_id>')
 def view_map(map_id: int):
     return render_template('view.html', map_id=map_id)
