@@ -12,9 +12,9 @@ $(function() {
     // Constants
     var colors = {
         'k': '#000000',
-        'r': '#ff0000',
-        'g': '#00ff00',
-        'b': '#0000ff'
+        'r': '#ff311d',
+        'g': '#36ff3c',
+        'b': '#305aff'
     };
 
     // Elements
@@ -25,6 +25,7 @@ $(function() {
     // Variables
     var current_map = null;
     var ctx = canvas.getContext('2d');
+    var filled = true;
 
     // Variables
     function showMessage(message) {
@@ -54,13 +55,18 @@ $(function() {
 
         map.lines.forEach(function(line) {
             ctx.strokeStyle = colors[line.color];
+            ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.moveTo(cw * line.points[0].x / res, ch * line.points[0].y / res);
             line.points.forEach(function(p) {
                 ctx.lineTo(cw * p.x / res, ch * p.y / res);
             });
             if (line.closed) {
-                ctx.lineTo(cw * line.points[0].x / res, ch * line.points[0].y / res);
+                ctx.closePath();
+                if (filled) {
+                    ctx.fillStyle = colors[line.color];
+                    ctx.fill();
+                }
             }
             ctx.stroke();
         })
